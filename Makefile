@@ -6,29 +6,35 @@ TOP := $(CURDIR)
 
 BUILD_TOP = $(TOP)/build
 
-BUILD_ROOT = $(BUILD_TOP)/build
-SRC_ROOT = $(BUILD_TOP)/src
-UTIL_ROOT = $(BUILD_TOP)/util
-
-
 U_BOOT_TAG = 2016.11-toradex
 KERNEL_TAG = toradex_vf_4.4
 
-CROSS_COMPILE = arm-linux-gnueabihf-
 
-# Downloaded gcc-linaro-6.2.1-2016.11-x86_64_arm-linux-gnueabihf.tar.xz from
-#   https://releases.linaro.org/components/toolchain/binaries/
-#       6.2-2016.11/arm-linux-gnueabihf/
-BINUTILS_DIR = /dls_sw/targetOS/x-tools/arm-linux-gnueabihf/bin
+TOOLCHAIN = $(TOP)/TOOLCHAIN
 
 REQUIRED_SYMBOLS += ROOTFS_TOP
 
 DEFAULT_TARGETS += u-boot
+DEFAULT_TARGETS += kernel
+DEFAULT_TARGETS += rootfs
 
 include CONFIG
+include $(TOOLCHAIN)
+
+
+export CROSS_COMPILE = $(COMPILER_PREFIX)-
+
+BUILD_ROOT = $(BUILD_TOP)/build
+SRC_ROOT = $(BUILD_TOP)/src
+TOOLKIT_ROOT = $(BUILD_TOP)/toolkit
+
 
 ARCH = arm
-export PATH := $(BINUTILS_DIR):$(UTIL_ROOT)/bin:$(PATH)
+export PATH := $(BINUTILS_DIR)/bin:$(TOOLKIT_ROOT)/bin:$(PATH)
+
+# (we'll revisit this)
+# Both kernel and u-boot builds need CROSS_COMPILE and ARCH to be exported
+EXPORTS = $(call EXPORT,CROSS_COMPILE ARCH)
 
 
 # ------------------------------------------------------------------------------
@@ -90,9 +96,6 @@ SAFE_QUOTE = '$(subst ','\'',$(1))'
 #
 EXPORT = $(foreach var,$(1),$(var)=$(call SAFE_QUOTE,$($(var))))
 
-# Both kernel and u-boot builds need CROSS_COMPILE and ARCH to be exported
-EXPORTS = $(call EXPORT,CROSS_COMPILE ARCH)
-
 # Use the rootfs extraction tool to decompress our source trees.  We ensure that
 # the source root is present.
 define EXTRACT_FILE
@@ -122,7 +125,7 @@ clean-all: clean
 #
 # This is a dependency of the u-boot build.
 
-DTC = $(UTIL_ROOT)/bin/dtc
+DTC = $(TOOLKIT_ROOT)/bin/dtc
 
 DTC_NAME = dtc-1.4.1
 DTC_SRC = $(SRC_ROOT)/$(DTC_NAME)
@@ -136,7 +139,7 @@ $(DTC):
 	mkdir -p $(BUILD_ROOT)
 	mv $(DTC_SRC) $(DTC_BUILD)
 	make -C $(DTC_BUILD)
-	make -C $(DTC_BUILD) PREFIX=$(UTIL_ROOT) install
+	make -C $(DTC_BUILD) PREFIX=$(TOOLKIT_ROOT) install
 
 dtc: $(DTC)
 .PHONY: dtc
@@ -203,3 +206,44 @@ kernel-menuconfig: $(KERNEL_BUILD)/.config
 kernel-src: $(KERNEL_SRC)
 kernel: $(ZIMAGE)
 .PHONY: kernel-src kernel
+
+
+# ------------------------------------------------------------------------------
+# File system building
+#
+
+# Command for building rootfs.  Need to specify both action and target name.
+MAKE_ROOTFS = \
+    $(call EXPORT,TOOLCHAIN) $(ROOTFS_TOP)/rootfs \
+        -f '$(TAR_FILES)' -r $(BUILD_TOP) -t $(CURDIR)/$1 $2
+
+%.gz: %
+	gzip -c -1 $< >$@
+
+# The following targets are to make it easier to edit the busybox configuration.
+#
+%-menuconfig: phony
+	$(call MAKE_ROOTFS,$*,package busybox menuconfig)
+
+%-busybox: phony
+	$(call MAKE_ROOTFS,$*,package busybox) KEEP_BUILD=1
+
+.PHONY: phony
+
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Root file system
+#
+# This is the installed target file system
+
+ROOTFS_O = $(BUILD_TOP)/rootfs
+ROOTFS_CPIO = $(ROOTFS_O)/image/imagefile.cpio
+ROOTFS = $(ROOTFS_CPIO).gz
+
+$(ROOTFS_CPIO): $(shell find rootfs -type f)
+	$(call MAKE_ROOTFS,rootfs,make)
+
+rootfs: $(ROOTFS)
+
+.PHONY: rootfs
