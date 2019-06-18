@@ -27,6 +27,7 @@ export CROSS_COMPILE = $(COMPILER_PREFIX)-
 BUILD_ROOT = $(BUILD_TOP)/build
 SRC_ROOT = $(BUILD_TOP)/src
 TOOLKIT_ROOT = $(BUILD_TOP)/toolkit
+BOOT_ROOT = $(BUILD_TOP)/boot
 
 
 ARCH = arm
@@ -132,12 +133,11 @@ DTC_SRC = $(SRC_ROOT)/$(DTC_NAME)
 DTC_BUILD = $(BUILD_ROOT)/dtc
 
 
-# This is very irritating: cannot build dtc out of tree without a *lot* of
-# messing around, really not worthwhile, so we move to build.
 $(DTC):
 	$(call EXTRACT_FILE,$(DTC_NAME).tgz,$(MD5_SUM_$(DTC_NAME)))
 	mkdir -p $(BUILD_ROOT)
-	mv $(DTC_SRC) $(DTC_BUILD)
+	# Image the source into the build directory so we can build out of tree
+	cp -Rs --no-preserve=mode $(DTC_SRC) $(DTC_BUILD)
 	make -C $(DTC_BUILD)
 	make -C $(DTC_BUILD) PREFIX=$(TOOLKIT_ROOT) install
 
@@ -181,6 +181,7 @@ KERNEL_SRC = $(SRC_ROOT)/$(KERNEL_NAME)
 KERNEL_BUILD = $(BUILD_ROOT)/linux
 
 ZIMAGE = $(KERNEL_BUILD)/arch/arm/boot/zImage
+DTB = $(KERNEL_BUILD)/arch/arm/boot/dts/vf500-colibri-eval-v3.dtb
 
 MAKE_KERNEL = $(EXPORTS) KBUILD_OUTPUT=$(KERNEL_BUILD) $(MAKE) -C $(KERNEL_SRC)
 
@@ -196,7 +197,8 @@ $(KERNEL_BUILD)/.config: kernel/dot.config $(KERNEL_SRC)
 $(ZIMAGE): $(KERNEL_BUILD)/.config
 	$(MAKE_KERNEL) zImage
 
-# Still need dtb build
+$(DTB):
+	$(MAKE_KERNEL) vf500-colibri-eval-v3.dtb
 
 kernel-menuconfig: $(KERNEL_BUILD)/.config
 	$(MAKE_KERNEL) menuconfig
@@ -205,7 +207,8 @@ kernel-menuconfig: $(KERNEL_BUILD)/.config
 
 kernel-src: $(KERNEL_SRC)
 kernel: $(ZIMAGE)
-.PHONY: kernel-src kernel
+dtb: $(DTB)
+.PHONY: kernel-src kernel dtb
 
 
 # ------------------------------------------------------------------------------
@@ -247,3 +250,10 @@ $(ROOTFS_CPIO): $(shell find rootfs -type f)
 rootfs: $(ROOTFS)
 
 .PHONY: rootfs
+
+
+# ------------------------------------------------------------------------------
+# Boot image
+#
+
+boot: $(ROOTFS)
