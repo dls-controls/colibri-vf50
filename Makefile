@@ -181,7 +181,7 @@ KERNEL_SRC = $(SRC_ROOT)/$(KERNEL_NAME)
 KERNEL_BUILD = $(BUILD_ROOT)/linux
 
 ZIMAGE = $(KERNEL_BUILD)/arch/arm/boot/zImage
-DTB = $(KERNEL_BUILD)/arch/arm/boot/dts/vf500-colibri-eval-v3.dtb
+KERNEL_DTB = $(KERNEL_BUILD)/arch/arm/boot/dts/vf500-colibri-eval-v3.dtb
 
 MAKE_KERNEL = $(EXPORTS) KBUILD_OUTPUT=$(KERNEL_BUILD) $(MAKE) -C $(KERNEL_SRC)
 
@@ -197,7 +197,7 @@ $(KERNEL_BUILD)/.config: kernel/dot.config $(KERNEL_SRC)
 $(ZIMAGE): $(KERNEL_BUILD)/.config
 	$(MAKE_KERNEL) zImage
 
-$(DTB):
+$(KERNEL_DTB):
 	$(MAKE_KERNEL) vf500-colibri-eval-v3.dtb
 
 kernel-menuconfig: $(KERNEL_BUILD)/.config
@@ -207,7 +207,7 @@ kernel-menuconfig: $(KERNEL_BUILD)/.config
 
 kernel-src: $(KERNEL_SRC)
 kernel: $(ZIMAGE)
-dtb: $(DTB)
+dtb: $(KERNEL_DTB)
 .PHONY: kernel-src kernel dtb
 
 
@@ -218,7 +218,7 @@ dtb: $(DTB)
 # Command for building rootfs.  Need to specify both action and target name.
 MAKE_ROOTFS = \
     $(call EXPORT,TOOLCHAIN) $(ROOTFS_TOP)/rootfs \
-        -f '$(TAR_FILES)' -r $(BUILD_TOP) -t $(CURDIR)/$1 $2
+        -f '$(TAR_FILES)' -r $(BUILD_TOP) -t $(CURDIR)/$1
 
 %.gz: %
 	gzip -c -1 $< >$@
@@ -226,10 +226,10 @@ MAKE_ROOTFS = \
 # The following targets are to make it easier to edit the busybox configuration.
 #
 %-menuconfig: phony
-	$(call MAKE_ROOTFS,$*,package busybox menuconfig)
+	$(call MAKE_ROOTFS,$*) package busybox menuconfig
 
 %-busybox: phony
-	$(call MAKE_ROOTFS,$*,package busybox) KEEP_BUILD=1
+	$(call MAKE_ROOTFS,$*) package busybox KEEP_BUILD=1
 
 .PHONY: phony
 
@@ -240,14 +240,14 @@ MAKE_ROOTFS = \
 #
 # This is the installed target file system
 
-ROOTFS_O = $(BUILD_TOP)/rootfs
+ROOTFS_O = $(BUILD_TOP)/targets/rootfs
 ROOTFS_CPIO = $(ROOTFS_O)/image/imagefile.cpio
-ROOTFS = $(ROOTFS_CPIO).gz
+ROOTFS_GZ = $(ROOTFS_CPIO).gz
 
 $(ROOTFS_CPIO): $(shell find rootfs -type f)
-	$(call MAKE_ROOTFS,rootfs,make)
+	$(call MAKE_ROOTFS,rootfs) make
 
-rootfs: $(ROOTFS)
+rootfs: $(ROOTFS_GZ)
 
 .PHONY: rootfs
 
@@ -256,4 +256,12 @@ rootfs: $(ROOTFS)
 # Boot image
 #
 
-boot: $(ROOTFS)
+BOOT_FILES += $(ZIMAGE)
+BOOT_FILES += $(KERNEL_DTB)
+BOOT_FILES += $(ROOTFS_CPIO)
+BOOT_FILES += $(ROOTFS_GZ)
+
+boot: $(BOOT_FILES)
+	mkdir -p $(BOOT_ROOT)
+	cp $^ $(BOOT_ROOT)
+.PHONY: boot

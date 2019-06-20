@@ -1,0 +1,231 @@
+Work in progress.
+
+To be done:
+
+- Install toolchain
+- Build u-boot
+- Build kernel
+- Build rootfs
+- Upgrade Colibri module from WinCE
+
+Downloaded gcc-linaro-6.2.1-2016.11-x86_64_arm-linux-gnueabihf.tar.xz from
+    https://releases.linaro.org/components/toolchain/binaries/6.2-2016.11/arm-linux-gnueabihf/
+
+Cloned u-boot git from git://git.toradex.com/u-boot-toradex.git, checked out
+branch 2016.11-toradex
+
+Colibri datasheet downloaded from toradex.com as
+    101355-colibri-vf50-datasheet.pdf
+
+Evaluation board datasheet downloaded as
+    102284-colibri-evaluation-board-datasheet.pdf
+
+Top level Toradex documentation at
+    https://developer.toradex.com/products/colibri-vf50
+
+Reflashing instructions here
+    https://developer.toradex.com/knowledge-base/flashing-linux-on-vybrid-modules
+
+U-boot and kernel instructions here
+    https://developer.toradex.com/knowledge-base/build-u-boot-and-linux-kernel-from-source-code
+
+
+Work log
+
+7/5/19
+
+* Untar gcc-linaro...tar.xz and rename result as
+    /dls_sw/targetOS/x-tools/gcc-6.2.1-glibc-2.23/arm-linux-gnueabihf
+
+* Repeat clone of git://git.toradex.com/u-boot-toradex.git into
+    /scratch/mga83/git/u-boot-toradex
+
+According to instructions we need colibri_vf_defconfig
+
+8/5/19
+
+Working on u-boot build.  Create tar file from git repo via command
+
+    git archive origin/2016.11-toradex --prefix=u-boot-toradex-2016.11/ |
+    gzip - >~/targetOS/colibri-vf50/u-boot-toradex-2016.11.tgz
+
+9/5/19
+
+U-boot build complete.
+
+Kernel repo at
+    git://git.toradex.com/linux-toradex.git
+    We are supposed to use:
+
+        branch: toradex_vf_4.4
+        kernel config: colibri_vf_defconfig
+        device tree: vf500-colibri-eval-v3.dtb vf610-colibri-eval-v3.dtb
+
+It looks as if we may need to configure our own device tree.  Hmmm
+
+Actually, starting to look really complicated.  Looking at Colibri image here:
+//developer1.toradex.com/files/toradex-dev/uploads/media/Colibri/Linux/Images/Colibri-VF_Console-Image_2.7-20180104.tar.bz2
+
+The update.sh script here shows some complexites.
+
+We have the following definitions in the u-boot environment:
+
+
+#define DFU_ALT_NAND_INFO "vf-bcb part 0,1;u-boot part 0,2;ubi part 0,4"
+
+#define MTDPARTS_DEFAULT	"mtdparts=vf610_nfc:"		\
+				"128k(vf-bcb)ro,"		\
+				"1408k(u-boot)ro,"		\
+				"512k(u-boot-env),"		\
+				"-(ubi)"
+
+        BOOTENV \
+
+//         MEM_LAYOUT_ENV_SETTINGS \
+        "fdt_addr_r=0x82000000\0" \
+        "fdt_high=0xffffffff\0" \
+        "initrd_high=0xffffffff\0" \
+        "kernel_addr_r=0x81000000\0" \
+        "pxefile_addr_r=0x87100000\0" \
+        "ramdisk_addr_r=0x82100000\0" \
+        "scriptaddr=0x87000000\0"
+
+//        NFS_BOOTCMD \
+        "nfsargs=ip=:::::eth0: root=/dev/nfs\0" \
+        "nfsboot=run setup; " \
+                "setenv bootargs ${defargs} ${nfsargs} " \
+                "${setupargs} ${vidargs}; echo Booting from NFS...;" \
+                "dhcp ${kernel_addr_r} && "     \
+                "tftp ${fdt_addr_r} ${soc}-colibri-${fdt_board}.dtb && " \
+                "run fdt_fixup && bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
+
+//         SD_BOOTCMD \
+        "sdargs=root=/dev/mmcblk0p2 ro rootwait\0"      \
+        "sdboot=run setup; setenv bootargs ${defargs} ${sdargs} " \
+        "${setupargs} ${vidargs}; echo Booting from MMC/SD card...; " \
+                "load mmc 0:1 ${kernel_addr_r} ${kernel_file} && " \
+                "load mmc 0:1 ${fdt_addr_r} ${soc}-colibri-${fdt_board}.dtb && " \
+        "run fdt_fixup && bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
+
+//         UBI_BOOTCMD \
+        "ubiargs=ubi.mtd=ubi root=ubi0:rootfs rw rootfstype=ubifs " \
+                "ubi.fm_autoconvert=1\0" \
+        "ubiboot=run setup; " \
+                "setenv bootargs ${defargs} ${ubiargs} " \
+                "${setupargs} ${vidargs}; echo Booting from NAND...; " \
+                "ubi part ubi && " \
+                "ubi read ${kernel_addr_r} kernel && " \
+                "ubi read ${fdt_addr_r} dtb && " \
+                "run fdt_fixup && bootz ${kernel_addr_r} - ${fdt_addr_r}\0" \
+
+        "console=ttyLP0\0" \
+        "defargs=user_debug=30\0" \
+        "dfu_alt_info=" DFU_ALT_NAND_INFO "\0" \
+        "fdt_board=eval-v3\0" \
+        "fdt_fixup=;\0" \
+        "kernel_file=zImage\0" \
+        "mtdparts=" MTDPARTS_DEFAULT "\0" \
+        "setethupdate=if env exists ethaddr; then; else setenv ethaddr " \
+                "00:14:2d:00:00:00; fi; tftpboot ${loadaddr} " \
+                "${board}/flash_eth.img && source ${loadaddr}\0" \
+        "setsdupdate=mmc rescan && setenv interface mmc && " \
+                "fatload ${interface} 0:1 ${loadaddr} " \
+                "${board}/flash_blk.img && source ${loadaddr}\0" \
+        "setup=setenv setupargs " \
+                "console=tty1 console=${console}" \
+                ",${baudrate}n8 ${memargs} consoleblank=0 ${mtdparts}\0" \
+        "setupdate=run setsdupdate || run setusbupdate || run setethupdate\0" \
+        "setusbupdate=usb start && setenv interface usb && " \
+                "fatload ${interface} 0:1 ${loadaddr} " \
+                "${board}/flash_blk.img && source ${loadaddr}\0" \
+        "splashpos=m,m\0" \
+        "video-mode=dcufb:640x480-16@60,monitor=lcd\0"
+
+10/5/19
+
+    U-boot successfully flashed.  Simple enough:
+
+    1.  Format SD card for FAT32 (needed to repartition from default for some
+        reason, the default partition was not viewable by Eboot).  Use
+        gnome-disks tool for this.
+    2.  Copy /scratch/mga83/tmp/colibri-vf50/build/u-boot/u-boot-nand.imx to
+        SD card
+    3.  Insert SD card into development board
+    4.  Start up dev board with serial console connected (115200N8), hit space
+        immediately to interrupt boot
+    5.  Type X to enter command mode
+    6.  Reflash with command
+            flashloader u-boot-nand.imx
+
+    Initial build of rootfs, need to get toolchain definition right first...
+
+14/5/19
+
+    Rootfs built, but have had to work around interesting problem in ncurses
+    build: it seems that an auto-generation process within this build is broken
+    by a change in the behaviour of the gcc preprocessor.  Fortunately the fix
+    is easy and backwards compatible.
+
+15/5/19
+
+    Still need to sort out building of device tree.  We are offered a choice of
+    two .dtb files to build:
+
+        vf500-colibri-eval-v3.dtb
+        vf610-colibri-eval-v3.dtb
+
+    Actually, the vf500 bit is the bit that identifies our module.  That should
+    be enough.  The source for this file is in
+
+        src/linux-toradex_vf_4.4/arch/arm/boot/dts
+
+    and it is clearly specific to the development board.
+
+    Note: see https://elinux.org/Device_Tree_Reference for dts info.
+
+18/5/19
+
+    Picking up the pieces
+
+19/5/19
+
+    Trying to get to grips with u-boot
+
+    ls mmc 0:1
+        Shows content of the SD card, seems to work
+
+    load mmc 0:1 $kernel_addr_r $kernel_file
+        Loads kernel image zImage into memory
+
+    bootz $kernel_addr_r
+        Fails with error
+            FDT and ATAGS support not compiled in - hanging
+        Quite possibly because we don't have a .dtb
+
+    load mmc 0:1 ${fdt_addr_r} ${soc}-colibri-${fdt_board}.dtb
+        Loads dtb into memory
+
+    bootz ${kernel_addr_r} - ${fdt_addr_r}
+        Starts the kernel!  Panics because no rootfs.
+
+    This is excellent progress.  Now need to figure out how to specify the
+    rootfs.
+
+    load mmc 0:1 $ramdisk_addr_r imagefile.cpio.gz
+        Loads initramfs into memory
+
+    Now trying ramfs boot:
+
+        setenv bootargs rdinit=/sbin/init root=/dev/ram initrd=$ramdisk_addr_r,5200676
+
+        Here the final number is the length of the cpio.gz file
+
+It works!  I don't get a login terminal, but that can be for all sorts of
+possible reasons.  So here is the working boot sequence:
+
+
+load mmc 0:1 $kernel_addr_r $kernel_file
+load mmc 0:1 ${fdt_addr_r} ${soc}-colibri-${fdt_board}.dtb
+load mmc 0:1 $ramdisk_addr_r imagefile.cpio.gz
+setenv bootargs rdinit=/sbin/init root=/dev/ram initrd=$ramdisk_addr_r,5200797
+bootz ${kernel_addr_r} - ${fdt_addr_r}
