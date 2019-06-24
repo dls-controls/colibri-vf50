@@ -48,6 +48,8 @@ ROOT_PASSWORD = PandA
 OPTIONS += ldconfig
 LDCONFIG = once
 
+BOOT = $(configdir)/sd-card-boot
+
 # OPTIONS += $(configdir)/skeleton
 # OPTIONS += $(configdir)/network
 # OPTIONS += $(configdir)/automount

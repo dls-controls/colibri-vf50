@@ -1,0 +1,18 @@
+# Builds script for booting from SD card
+
+BOOT_SCRIPT_IMAGE ?= boot-script.image
+MKIMAGE ?= mkimage
+
+
+%.image: %
+	$(MKIMAGE) -T script -d $< $@
+
+
+$(O)/boot-script: $(O)/imagefile.cpio.gz
+	$(bootdir)/make-initramfs-script $@ $<
+
+
+boot: $(O)/imagefile.cpio.gz $(O)/$(BOOT_SCRIPT_IMAGE)
+.PHONY: boot
+
+# vim: set filetype=make:

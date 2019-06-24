@@ -166,6 +166,8 @@ $(U_BOOT_IMAGE): $(DTC) $(U_BOOT_SRC)
 	mkdir -p $(U_BOOT_BUILD)
 	$(MAKE_U_BOOT) colibri_vf_defconfig
 	$(MAKE_U_BOOT)
+	mkdir -p $(TOOLKIT_ROOT)/bin
+	cp $(U_BOOT_BUILD)/tools/mkimage $(TOOLKIT_ROOT)/bin
 
 u-boot: $(U_BOOT_IMAGE)
 u-boot-src: $(U_BOOT_SRC)
@@ -220,8 +222,8 @@ MAKE_ROOTFS = \
     $(call EXPORT,TOOLCHAIN) $(ROOTFS_TOP)/rootfs \
         -f '$(TAR_FILES)' -r $(BUILD_TOP) -t $(CURDIR)/$1
 
-%.gz: %
-	gzip -c -1 $< >$@
+# %.gz: %
+# 	gzip -c -1 $< >$@
 
 # The following targets are to make it easier to edit the busybox configuration.
 #
@@ -240,15 +242,25 @@ MAKE_ROOTFS = \
 #
 # This is the installed target file system
 
-ROOTFS_O = $(BUILD_TOP)/targets/rootfs
-ROOTFS_CPIO = $(ROOTFS_O)/image/imagefile.cpio
-ROOTFS_GZ = $(ROOTFS_CPIO).gz
+# ROOTFS_O = $(BUILD_TOP)/targets/rootfs
+# ROOTFS_CPIO = $(ROOTFS_O)/image/imagefile.cpio
+# ROOTFS_GZ = $(ROOTFS_CPIO).gz
 
-$(ROOTFS_CPIO): $(shell find rootfs -type f)
+# To handle make's requirement to have a single build target, we depend on the
+# rootfs image directory.  This is rebuilt each time and contains all the target
+# files we will want.
+ROOTFS_IMAGE = $(BUILD_TOP)/targets/rootfs/image
+
+# We have a dependency on u-boot so that the mkimage command is available
+$(ROOTFS_IMAGE): $(shell find rootfs -type f) $(U_BOOT_IMAGE)
 	$(call MAKE_ROOTFS,rootfs) make
 
-rootfs: $(ROOTFS_GZ)
+ROOTFS_GZ = $(ROOTFS_IMAGE)/imagefile.cpio.gz
+ROOTFS_UBOOT = $(ROOTFS_IMAGE)/boot-script.image
 
+$(ROOTFS_GZ) $(ROOTFS_UBOOT): $(ROOTFS_IMAGE)
+
+rootfs: $(ROOTFS_IMAGE)
 .PHONY: rootfs
 
 
@@ -258,10 +270,11 @@ rootfs: $(ROOTFS_GZ)
 
 BOOT_FILES += $(ZIMAGE)
 BOOT_FILES += $(KERNEL_DTB)
-BOOT_FILES += $(ROOTFS_CPIO)
 BOOT_FILES += $(ROOTFS_GZ)
+BOOT_FILES += $(ROOTFS_UBOOT)
 
 boot: $(BOOT_FILES)
+	rm -rf $(BOOT_ROOT)
 	mkdir -p $(BOOT_ROOT)
 	cp $^ $(BOOT_ROOT)
 .PHONY: boot
