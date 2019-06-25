@@ -16,7 +16,6 @@ DROPBEAR_KEYS = n
 DROPBEAR_OPTS = -s
 
 PACKAGES += ntp
-NTP_CONF = n
 
 # Useful debugging tools
 PACKAGES += strace lsof
@@ -43,18 +42,17 @@ ROOTFS_VERSION = DLS $(GIT_VERSION_SUFFIX)
 CONSOLE_BAUD = 115200
 CONSOLE_TTY = ttyLP0
 
-ROOT_PASSWORD = PandA
+ROOT_PASSWORD = root
 
 OPTIONS += ldconfig
 LDCONFIG = once
 
 BOOT = $(configdir)/sd-card-boot
 
-# OPTIONS += $(configdir)/skeleton
-# OPTIONS += $(configdir)/network
-# OPTIONS += $(configdir)/automount
-# OPTIONS += $(configdir)/zpkg
-# OPTIONS += $(configdir)/web-admin
-# OPTIONS += $(configdir)/led-daemon
+OPTIONS += network
+NW_PORT = eth0
+NW_ADDRESS = 172.23.252.22
+NW_NETMASK = 255.255.240.0
+NW_GATEWAY = 255.255.240.254
 
 # vim: set filetype=make:
