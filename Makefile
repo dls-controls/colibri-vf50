@@ -14,9 +14,7 @@ TOOLCHAIN = $(TOP)/TOOLCHAIN
 
 REQUIRED_SYMBOLS += ROOTFS_TOP
 
-DEFAULT_TARGETS += u-boot
-DEFAULT_TARGETS += kernel
-DEFAULT_TARGETS += rootfs
+DEFAULT_TARGETS += boot
 
 include CONFIG
 include $(TOOLCHAIN)
@@ -220,20 +218,7 @@ dtb: $(KERNEL_DTB)
 # Command for building rootfs.  Need to specify both action and target name.
 MAKE_ROOTFS = \
     $(call EXPORT,TOOLCHAIN) $(ROOTFS_TOP)/rootfs \
-        -f '$(TAR_FILES)' -r $(BUILD_TOP) -t $(CURDIR)/$1
-
-# %.gz: %
-# 	gzip -c -1 $< >$@
-
-# The following targets are to make it easier to edit the busybox configuration.
-#
-%-menuconfig: phony
-	$(call MAKE_ROOTFS,$*) package busybox menuconfig
-
-%-busybox: phony
-	$(call MAKE_ROOTFS,$*) package busybox KEEP_BUILD=1
-
-.PHONY: phony
+        -f '$(TAR_FILES)' -r $(BUILD_TOP) -t $(CURDIR)/rootfs
 
 
 
@@ -242,18 +227,16 @@ MAKE_ROOTFS = \
 #
 # This is the installed target file system
 
-# ROOTFS_O = $(BUILD_TOP)/targets/rootfs
-# ROOTFS_CPIO = $(ROOTFS_O)/image/imagefile.cpio
-# ROOTFS_GZ = $(ROOTFS_CPIO).gz
+ROOTFS_O = $(BUILD_TOP)/targets/rootfs
 
 # To handle make's requirement to have a single build target, we depend on the
 # rootfs image directory.  This is rebuilt each time and contains all the target
 # files we will want.
-ROOTFS_IMAGE = $(BUILD_TOP)/targets/rootfs/image
+ROOTFS_IMAGE = $(ROOTFS_O)/image
 
 # We have a dependency on u-boot so that the mkimage command is available
 $(ROOTFS_IMAGE): $(shell find rootfs -type f) $(U_BOOT_IMAGE)
-	$(call MAKE_ROOTFS,rootfs) make
+	$(call MAKE_ROOTFS) make
 
 ROOTFS_GZ = $(ROOTFS_IMAGE)/imagefile.cpio.gz
 ROOTFS_UBOOT = $(ROOTFS_IMAGE)/boot-script.image
@@ -262,6 +245,19 @@ $(ROOTFS_GZ) $(ROOTFS_UBOOT): $(ROOTFS_IMAGE)
 
 rootfs: $(ROOTFS_IMAGE)
 .PHONY: rootfs
+
+
+# The following targets are to make it easier to edit the busybox configuration.
+#
+busybox-menuconfig: $(ROOTFS_O)/build/busybox
+	$(call MAKE_ROOTFS) package busybox menuconfig
+.PHONY: busybox-menuconfig
+
+$(ROOTFS_O)/build/busybox:
+	$(call MAKE_ROOTFS) package busybox KEEP_BUILD=1
+
+busybox-keep: $(ROOTFS_O)/build/busybox
+.PHONY: busybox-keep
 
 
 # ------------------------------------------------------------------------------

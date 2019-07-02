@@ -9,7 +9,7 @@ MKIMAGE ?= mkimage
 
 
 $(O)/boot-script: $(O)/imagefile.cpio.gz
-	$(bootdir)/make-initramfs-script $@ $<
+	$(call EXPORT,EXTRA_BOOTARGS) $(bootdir)/make-initramfs-script $@ $<
 
 
 boot: $(O)/imagefile.cpio.gz $(O)/$(BOOT_SCRIPT_IMAGE)

@@ -235,3 +235,171 @@ bootz ${kernel_addr_r} - ${fdt_addr_r}
 Using a script:
 
 load mmc 0:1 $scriptaddr boot-script.image && source $scriptaddr
+
+1/7/19
+
+Looking at installing on flash.
+
+Some u-boot commands:
+
+    # mtdparts
+
+    device nand0 <vf610_nfc>, # parts = 4
+     #: name                size            offset          mask_flags
+     0: vf-bcb              0x00020000      0x00000000      1
+     1: u-boot              0x00160000      0x00020000      1
+     2: u-boot-env          0x00080000      0x00180000      0
+     3: ubi                 0x07e00000      0x00200000      0
+
+    active partition: nand0,0 - (vf-bcb) 0x00020000 @ 0x00000000
+
+    defaults:
+    mtdids  : nand0=vf610_nfc
+    mtdparts: mtdparts=vf610_nfc:128k(vf-bcb)ro,1408k(u-boot)ro,512k(u-boot-env),-(ubi)
+
+Shows partitioning scheme.  We have 128K for vf-bcb (what on earth is this?),
+1.375MB for u-boot, 512 K for u-boot-env (seems extravagant!), and the remaining
+space, 126 MB, for ubi.  Presumably ubi will have sub-partitions.
+
+At present running `ubi part ubi` fails:
+
+    # ubi part ubi
+    ubi0: default fastmap pool size: 50
+    ubi0: default fastmap WL pool size: 25
+    ubi0: attaching mtd1
+    ubi0: scanning is finished
+    UBI init error 22
+
+Perhaps `nand erase.part ubi` will work.  Result:
+
+    # nand erase.part ubi
+
+    NAND erase.part: device 0 offset 0x200000, size 0x7e00000
+    Skipping bad block at  0x013c0000
+    Skipping bad block at  0x07f80000
+    Skipping bad block at  0x07fa0000
+    Skipping bad block at  0x07fc0000
+    Skipping bad block at  0x07fe0000
+
+    OK
+
+Quite concerned about these bad blocks:
+
+    # nand bad
+
+    Device 0 bad blocks:
+      013c0000
+      07f80000
+      07fa0000
+      07fc0000
+      07fe0000
+
+Apparently bad blocks are routine.
+
+
+Now `ubi part ubi` seems to work:
+
+    Colibri VFxx # ubi part ubi
+    ubi0: default fastmap pool size: 50
+    ubi0: default fastmap WL pool size: 25
+    ubi0: attaching mtd1
+    ubi0: scanning is finished
+    ubi0: empty MTD device detected
+    ubi0: attached mtd1 (name "mtd=3", size 126 MiB)
+    ubi0: PEB size: 131072 bytes (128 KiB), LEB size: 126976 bytes
+    ubi0: min./max. I/O unit sizes: 2048/2048, sub-page size 2048
+    ubi0: VID header offset: 2048 (aligned 2048), data offset: 4096
+    ubi0: good PEBs: 1003, bad PEBs: 5, corrupted PEBs: 0
+    ubi0: user volume: 0, internal volumes: 1, max. volumes count: 128
+    ubi0: max/mean erase counter: 1/0, WL threshold: 4096, image sequence number: 0
+    ubi0: available PEBs: 982, total reserved PEBs: 21, PEBs reserved for bad PEB ha
+    ndling: 15
+
+Now let's create kernel and dtb areas.
+
+    # ubi create kernel 0x800000 static
+    Creating static volume kernel of size 8388608
+    # ubi create dtb 0x20000 static
+    Creating static volume dtb of size 131072
+
+Let's write the kernel image:
+
+    # load mmc 0:1 $kernel_addr_r $kernel_file
+    2967632 bytes read in 207 ms (13.7 MiB/s)
+    # ubi write $kernel_addr_r kernel $filesize
+    2967632 bytes written to volume kernel
+
+    # load mmc 0:1 ${fdt_addr_r} ${soc}-colibri-${fdt_board}.dtb
+    26187 bytes read in 18 ms (1.4 MiB/s)
+    # ubi write $fdt_addr_r dtb $filesize
+    26187 bytes written to volume dtb
+
+Looking promising.  Now create the rootfs partition.
+
+    # ubi create rootfs 0 dynamic
+    No size specified -> Using max size (115929088)
+    Creating dynamic volume rootfs of size 115929088
+
+This gives us 110 MB for rootfs which is ample.  Let's see what running ubiboot
+gives us:
+
+    # run ubiboot
+    Booting from NAND...
+    ubi0: detaching mtd1
+    ubi0: mtd1 is detached
+    ubi0: default fastmap pool size: 50
+    ubi0: default fastmap WL pool size: 25
+    ubi0: attaching mtd1
+    ubi0: scanning is finished
+    ubi0: attached mtd1 (name "mtd=3", size 126 MiB)
+    ubi0: PEB size: 131072 bytes (128 KiB), LEB size: 126976 bytes
+    ubi0: min./max. I/O unit sizes: 2048/2048, sub-page size 2048
+    ubi0: VID header offset: 2048 (aligned 2048), data offset: 4096
+    ubi0: good PEBs: 1003, bad PEBs: 5, corrupted PEBs: 0
+    ubi0: user volume: 3, internal volumes: 1, max. volumes count: 128
+    ubi0: max/mean erase counter: 2/1, WL threshold: 4096, image sequence number: 0
+    ubi0: available PEBs: 0, total reserved PEBs: 1003, PEBs reserved for bad PEB ha
+    ndling: 15
+    No size specified -> Using max size (2967632)
+    Read 2967632 bytes from volume kernel to 81000000
+    No size specified -> Using max size (26187)
+    Read 26187 bytes from volume dtb to 82000000
+    Kernel image @ 0x81000000 [ 0x000000 - 0x2d4850 ]
+    ## Flattened Device Tree blob at 82000000
+       Booting using the fdt blob at 0x82000000
+       Using Device Tree in place at 82000000, end 8200964a
+       Updating MTD partitions...
+
+    Starting kernel ...
+
+    [    0.000000] Booting Linux on physical CPU 0x0
+    ... most of boot elided
+    [    1.772398] VFS: Cannot open root device "ubi0:rootfs" or ubi0:rootfs: error -19
+    [    1.780000] Please append a correct "root=" boot option; here are the available partitions:
+    [    1.788495] Kernel panic - not syncing: VFS: Unable to mount root fs on ubi0:rootfs
+    [    1.796186] ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs on ubi0:rootfs
+
+Looking pretty good!
+
+Some advice on UBIFS here:
+https://bootlin.com/blog/creating-flashing-ubi-ubifs-images/
+
+Alas, although `ubiupdatevol -t /dev/ubi0_2` seems to have successfully
+initialised a volume (or has it?), mounting still fails:
+
+    # mount -t ubifs ubi0:rootfs /mnt
+    mount: mounting ubi0:rootfs on /mnt failed: No such device
+
+So, it seems that ubifs is not in /proc/filesystems.
+
+After enabling UBIFS (have to enable MISC_FILESYSTEMS first), the ubi0_0,1,2
+nodes have disappeared.  This is nothing to do with the kernel, as booting the
+older kernel (still saved in ubi) still fails to see any ubi0* nodes.
+
+It looks as if one of the kernel options is necessary.  If we set both
+    ubi.mtd=ubi and ubi.fm_autoconvert=1
+then finally we can mount ubi0:rootfs.  Looks like it's the ubi.mtd=ubi part.
+
+2/7/19
+
+We need to automate this process and wrap up.
