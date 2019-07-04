@@ -13,7 +13,7 @@ ubi create kernel 0x800000 static
 ubi create dtb 0x20000 static
 # We now want a rootfs partition and an opt partition.  Let's allow 40MB for the
 # rootfs.
-ubi create rootfs 0x2800000 static
+ubi create rootfs 0x2800000 dynamic
 # Finally allocate the remainder to the opt partition
 ubi create opt 0 dynamic
 
