@@ -3,16 +3,40 @@
 BOOT_SCRIPT_IMAGE ?= boot-script.image
 MKIMAGE ?= mkimage
 
+# These options are lifted from
+#   https://developer.toradex.com/knowledge-base/u-boot-flashing-methods
+# The -e ("logical erase block size") parameter matches the "logical eraseblock
+# size" reported by `ubi info` in u-boot.  I'm guessing -m ("minimum I/O unit
+# size") corresponds to "smallest flash I/O unit" reported by `ubi info`, and
+# I'm unable to find a sensible description of -c.
+MKFS_UBIFS_OPTS = --space-fixup -c 8112 -e 124KiB -m 2KiB
+
 
 %.image: %
 	$(MKIMAGE) -T script -d $< $@
 
+# We digest the canned script in three ways: first, remove comment lines and
+# blank lines; second, add in any extra boot arguments; and finally join \
+# separated lines.
+SED_COMMANDS =
+SED_COMMANDS += /^\#/d; /^$$/d;
+SED_COMMANDS += s/@@EXTRA_BOOTARGS@@/$(EXTRA_BOOTARGS)/;
+SED_COMMANDS += /\\$$/{N; s/\\\n//};
 
-$(O)/boot-script: $(O)/imagefile.cpio.gz
-	$(call EXPORT,EXTRA_BOOTARGS) $(bootdir)/make-initramfs-script $@ $<
+$(O)/boot-script: $(bootdir)/initramfs-script $(O)/imagefile.cpio.gz
+	sed '$(SED_COMMANDS)' $< >$@
+
+$(O)/install-rootfs: $(bootdir)/install-rootfs $(O)/imagefile.cpio.gz
+	sed '$(SED_COMMANDS)' $< >$@
 
 
-boot: $(O)/imagefile.cpio.gz $(O)/$(BOOT_SCRIPT_IMAGE)
+$(O)/rootfs.img: $(O)/imagefile.cpio
+	fakeroot -i $(TARGET_ROOT)/fakeroot.env \
+            mkfs.ubifs $(MKFS_UBIFS_OPTS) -o $@ -r $(TARGET_ROOT)/rootfs
+
+
+boot: $(O)/imagefile.cpio.gz $(O)/$(BOOT_SCRIPT_IMAGE) $(O)/rootfs.img
+boot: $(O)/install-rootfs.image
 .PHONY: boot
 
 # vim: set filetype=make:

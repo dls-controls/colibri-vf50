@@ -1,0 +1,33 @@
+# u-boot script for installing rootfs
+
+# First of all prepare the ubi space.  We start by erasing it completely, and
+# then create our partitions.  Alas if we do this on top of an existing UBI we
+# will lose the erase counters.
+nand erase.part ubi
+ubi part ubi
+
+# 8MB for kernel image (more than ample, at the time of writing our kernel is
+# around 3MB).
+ubi create kernel 0x800000 static
+# 128KB for device tree.  Our current device tree is 26K.
+ubi create dtb 0x20000 static
+# We now want a rootfs partition and an opt partition.  Let's allow 40MB for the
+# rootfs.
+ubi create rootfs 0x2800000 static
+# Finally allocate the remainder to the opt partition
+ubi create opt 0 dynamic
+
+# Now populate the partitions.
+
+# Kernel
+load mmc 0:1 $loadaddr $kernel_file
+ubi write $loadaddr kernel $filesize
+# Device tree
+load mmc 0:1 $loadaddr ${soc}-colibri-${fdt_board}.dtb
+ubi write $loadaddr dtb $filesize
+# Rootfs
+load mmc 0:1 $loadaddr rootfs.img
+ubi write $loadaddr rootfs $filesize
+
+
+# vim: set filetype=sh:

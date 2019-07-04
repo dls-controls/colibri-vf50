@@ -9,12 +9,19 @@ BUILD_TOP = $(TOP)/build
 U_BOOT_TAG = 2016.11-toradex
 KERNEL_TAG = toradex_vf_4.4
 
+# PKG_CONFIG_PATH = /usr/lib64/pkgconfig
 
 TOOLCHAIN = $(TOP)/TOOLCHAIN
 
+DEFAULT_TARGETS += boot
+
+# The following symbols are not given defaults but must be specified in the
+# CONFIG file.
 REQUIRED_SYMBOLS += ROOTFS_TOP
 
-DEFAULT_TARGETS += boot
+TAR_FILES += /dls_sw/prod/targetOS/tar-files
+TAR_FILES += /dls_sw/work/targetOS/tar-files
+
 
 include CONFIG
 include $(TOOLCHAIN)
@@ -62,6 +69,10 @@ MD5_SUM_u-boot-2016.11-toradex = 04f26e0133da6ad8ab16acdd31af48d7
 #    gzip - > linux-toradex_vf_4.4.tgz
 MD5_SUM_linux-toradex_vf_4.4 = 4130c62297b335159986ea258121794a
 
+# This file was downloaded from:
+#   ftp://ftp.infradead.org/pub/mtd-utils/mtd-utils-2.1.0.tar.bz2
+MD5_SUM_mtd-utils-2.1.0 = 91e399e2f698caff01e9b0f4ca1b59cc
+
 
 # ------------------------------------------------------------------------------
 # Helper code lifted from rootfs and other miscellaneous functions
@@ -96,10 +107,13 @@ SAFE_QUOTE = '$(subst ','\'',$(1))'
 EXPORT = $(foreach var,$(1),$(var)=$(call SAFE_QUOTE,$($(var))))
 
 # Use the rootfs extraction tool to decompress our source trees.  We ensure that
-# the source root is present.
+# the source root is present.  Call thus:
+#
+#       $(call EXTRACT_FILE,target-name,extension)
+#
 define EXTRACT_FILE
 mkdir -p $(SRC_ROOT)
-$(ROOTFS_TOP)/scripts/extract-tar $(SRC_ROOT) $1 $2 $(TAR_FILES)
+$(ROOTFS_TOP)/scripts/extract-tar $(SRC_ROOT) $1.$2 $(MD5_SUM_$1) $(TAR_FILES)
 endef
 
 
@@ -132,7 +146,7 @@ DTC_BUILD = $(BUILD_ROOT)/dtc
 
 
 $(DTC):
-	$(call EXTRACT_FILE,$(DTC_NAME).tgz,$(MD5_SUM_$(DTC_NAME)))
+	$(call EXTRACT_FILE,$(DTC_NAME),tgz)
 	mkdir -p $(BUILD_ROOT)
 	# Image the source into the build directory so we can build out of tree
 	cp -Rs --no-preserve=mode $(DTC_SRC) $(DTC_BUILD)
@@ -157,7 +171,7 @@ MAKE_U_BOOT = $(EXPORTS) KBUILD_OUTPUT=$(U_BOOT_BUILD) $(MAKE) -C $(U_BOOT_SRC)
 
 
 $(U_BOOT_SRC):
-	$(call EXTRACT_FILE,$(U_BOOT_NAME).tgz,$(MD5_SUM_$(U_BOOT_NAME)))
+	$(call EXTRACT_FILE,$(U_BOOT_NAME),tgz)
 	chmod -R a-w $(U_BOOT_SRC)
 
 $(U_BOOT_IMAGE): $(DTC) $(U_BOOT_SRC)
@@ -186,7 +200,7 @@ KERNEL_DTB = $(KERNEL_BUILD)/arch/arm/boot/dts/vf500-colibri-eval-v3.dtb
 MAKE_KERNEL = $(EXPORTS) KBUILD_OUTPUT=$(KERNEL_BUILD) $(MAKE) -C $(KERNEL_SRC)
 
 $(KERNEL_SRC):
-	$(call EXTRACT_FILE,$(KERNEL_NAME).tgz,$(MD5_SUM_$(KERNEL_NAME)))
+	$(call EXTRACT_FILE,$(KERNEL_NAME),tgz)
 	chmod -R a-w $(KERNEL_SRC)
 
 $(KERNEL_BUILD)/.config: kernel/dot.config $(KERNEL_SRC)
@@ -196,6 +210,7 @@ $(KERNEL_BUILD)/.config: kernel/dot.config $(KERNEL_SRC)
 
 $(ZIMAGE): $(KERNEL_BUILD)/.config
 	$(MAKE_KERNEL) zImage
+	touch $@
 
 $(KERNEL_DTB):
 	$(MAKE_KERNEL) vf500-colibri-eval-v3.dtb
@@ -209,6 +224,43 @@ kernel-src: $(KERNEL_SRC)
 kernel: $(ZIMAGE)
 dtb: $(KERNEL_DTB)
 .PHONY: kernel-src kernel dtb
+
+
+# ------------------------------------------------------------------------------
+# MTD tools
+#
+# We need some mtd tools for UBI filesystem generation for initial installation.
+
+MKFS_UBIFS = $(TOOLKIT_ROOT)/bin/mkfs.ubifs
+
+MTD_UTILS_NAME = mtd-utils-2.1.0
+MTD_UTILS_SRC = $(SRC_ROOT)/$(MTD_UTILS_NAME)
+MTD_UTILS_PATCH = patches/mkfs.ubifs.symlink.patch
+
+MTD_UTILS_CONFIG_OPTS += --without-tests
+MTD_UTILS_CONFIG_OPTS += --without-lsmtd
+MTD_UTILS_CONFIG_OPTS += --without-jffs
+MTD_UTILS_CONFIG_OPTS += --without-lzo
+MTD_UTILS_CONFIG_OPTS += --without-selinux
+MTD_UTILS_CONFIG_OPTS += --without-openssl
+
+MTD_UTILS_BUILD = $(BUILD_ROOT)/mtd-utils
+
+$(MTD_UTILS_SRC):
+	$(call EXTRACT_FILE,$(MTD_UTILS_NAME),tar.bz2)
+	patch -d $(MTD_UTILS_SRC) -p1 < $(MTD_UTILS_PATCH)
+	chmod -R a-w $(MTD_UTILS_SRC)
+
+$(MKFS_UBIFS): $(MTD_UTILS_SRC)
+	mkdir -p $(MTD_UTILS_BUILD)
+	cd $(MTD_UTILS_BUILD)  &&  \
+            PKG_CONFIG_PATH=$(shell pkg-config --variable pc_path pkg-config) \
+            $(MTD_UTILS_SRC)/configure $(MTD_UTILS_CONFIG_OPTS)
+	make -C $(MTD_UTILS_BUILD)
+	install $(MTD_UTILS_BUILD)/mkfs.ubifs $@
+
+mtd-utils: $(MKFS_UBIFS)
+.PHONY: mtd-utils
 
 
 # ------------------------------------------------------------------------------
@@ -238,10 +290,17 @@ ROOTFS_IMAGE = $(ROOTFS_O)/image
 $(ROOTFS_IMAGE): $(shell find rootfs -type f) $(U_BOOT_IMAGE)
 	$(call MAKE_ROOTFS) make
 
-ROOTFS_GZ = $(ROOTFS_IMAGE)/imagefile.cpio.gz
-ROOTFS_UBOOT = $(ROOTFS_IMAGE)/boot-script.image
+# ROOTFS_GZ = $(ROOTFS_IMAGE)/imagefile.cpio.gz
+# ROOTFS_UBOOT = $(ROOTFS_IMAGE)/boot-script.image
+# ROOTFS_UBIFS = $(ROOTFS_IMAGE)/rootfs.img
+# ROOTFS_INSTALL = $(ROOTFS_IMAGE)/install-rootfs.image
+ROOTFS_FILES += $(ROOTFS_IMAGE)/imagefile.cpio.gz
+ROOTFS_FILES += $(ROOTFS_IMAGE)/boot-script.image
+ROOTFS_FILES += $(ROOTFS_IMAGE)/rootfs.img
+ROOTFS_FILES += $(ROOTFS_IMAGE)/install-rootfs.image
 
-$(ROOTFS_GZ) $(ROOTFS_UBOOT): $(ROOTFS_IMAGE)
+# $(ROOTFS_GZ) $(ROOTFS_UBOOT) $(ROOTFS_UBIFS): $(ROOTFS_IMAGE)
+$(ROOTFS_FILES): $(ROOTFS_IMAGE)
 
 rootfs: $(ROOTFS_IMAGE)
 .PHONY: rootfs
@@ -266,8 +325,11 @@ busybox-keep: $(ROOTFS_O)/build/busybox
 
 BOOT_FILES += $(ZIMAGE)
 BOOT_FILES += $(KERNEL_DTB)
-BOOT_FILES += $(ROOTFS_GZ)
-BOOT_FILES += $(ROOTFS_UBOOT)
+BOOT_FILES += $(ROOTFS_FILES)
+# BOOT_FILES += $(ROOTFS_GZ)
+# BOOT_FILES += $(ROOTFS_UBOOT)
+# BOOT_FILES += $(ROOTFS_UBIFS)
+# BOOT_FILES += $(ROOTFS_INSTALL)
 
 boot: $(BOOT_FILES)
 	rm -rf $(BOOT_ROOT)
