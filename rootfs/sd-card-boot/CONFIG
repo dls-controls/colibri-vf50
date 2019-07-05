@@ -9,7 +9,7 @@ MKIMAGE ?= mkimage
 # size" reported by `ubi info` in u-boot.  I'm guessing -m ("minimum I/O unit
 # size") corresponds to "smallest flash I/O unit" reported by `ubi info`, and
 # I'm unable to find a sensible description of -c.
-MKFS_UBIFS_OPTS = --space-fixup -c 8112 -e 124KiB -m 2KiB
+MKFS_UBIFS_OPTS = --space-fixup -c 8112 -e 124KiB -m 2048
 
 
 %.image: %

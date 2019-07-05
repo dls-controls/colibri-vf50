@@ -59,4 +59,12 @@ NW_NETMASK = 255.255.240.0
 NW_GATEWAY = 172.23.240.254
 NW_HOSTNAME = colibri-vf50
 
+# -----------------------------------------------------------------------------
+# Rootfs options and configuration
+
+final-install:
+	$(install) $(FW_PRINTENV) /sbin/
+	$(install) $(configdir)/fw_env.config /etc
+	ln -s fw_printenv $(sysroot)/sbin/fw_setenv
+
 # vim: set filetype=make:

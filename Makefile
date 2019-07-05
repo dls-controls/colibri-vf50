@@ -166,6 +166,7 @@ U_BOOT_SRC = $(SRC_ROOT)/$(U_BOOT_NAME)
 U_BOOT_BUILD = $(BUILD_ROOT)/u-boot
 
 U_BOOT_IMAGE = $(U_BOOT_BUILD)/u-boot-nand.imx
+FW_PRINTENV = $(U_BOOT_BUILD)/tools/env/fw_printenv
 
 MAKE_U_BOOT = $(EXPORTS) KBUILD_OUTPUT=$(U_BOOT_BUILD) $(MAKE) -C $(U_BOOT_SRC)
 
@@ -180,6 +181,10 @@ $(U_BOOT_IMAGE): $(DTC) $(U_BOOT_SRC)
 	$(MAKE_U_BOOT)
 	mkdir -p $(TOOLKIT_ROOT)/bin
 	cp $(U_BOOT_BUILD)/tools/mkimage $(TOOLKIT_ROOT)/bin
+
+$(FW_PRINTENV): $(U_BOOT_SRC)
+	$(MAKE_U_BOOT) env
+
 
 u-boot: $(U_BOOT_IMAGE)
 u-boot-src: $(U_BOOT_SRC)
@@ -266,20 +271,15 @@ mtd-utils: $(MKFS_UBIFS)
 # ------------------------------------------------------------------------------
 # File system building
 #
-
-# Command for building rootfs.  Need to specify both action and target name.
-MAKE_ROOTFS = \
-    $(call EXPORT,TOOLCHAIN) $(ROOTFS_TOP)/rootfs \
-        -f '$(TAR_FILES)' -r $(BUILD_TOP) -t $(CURDIR)/rootfs
-
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Root file system
-#
 # This is the installed target file system
 
 ROOTFS_O = $(BUILD_TOP)/targets/rootfs
+
+# Command for building rootfs.  Need to specify both action and target name.
+MAKE_ROOTFS = \
+    $(call EXPORT,TOOLCHAIN FW_PRINTENV) $(ROOTFS_TOP)/rootfs \
+        -f '$(TAR_FILES)' -r $(BUILD_TOP) -t $(CURDIR)/rootfs
+
 
 # To handle make's requirement to have a single build target, we depend on the
 # rootfs image directory.  This is rebuilt each time and contains all the target
@@ -287,19 +287,15 @@ ROOTFS_O = $(BUILD_TOP)/targets/rootfs
 ROOTFS_IMAGE = $(ROOTFS_O)/image
 
 # We have a dependency on u-boot so that the mkimage command is available
-$(ROOTFS_IMAGE): $(shell find rootfs -type f) $(U_BOOT_IMAGE)
+$(ROOTFS_IMAGE): $(shell find rootfs -type f) $(U_BOOT_IMAGE) $(FW_PRINTENV)
 	$(call MAKE_ROOTFS) make
 
-# ROOTFS_GZ = $(ROOTFS_IMAGE)/imagefile.cpio.gz
-# ROOTFS_UBOOT = $(ROOTFS_IMAGE)/boot-script.image
-# ROOTFS_UBIFS = $(ROOTFS_IMAGE)/rootfs.img
-# ROOTFS_INSTALL = $(ROOTFS_IMAGE)/install-rootfs.image
+
 ROOTFS_FILES += $(ROOTFS_IMAGE)/imagefile.cpio.gz
 ROOTFS_FILES += $(ROOTFS_IMAGE)/boot-script.image
 ROOTFS_FILES += $(ROOTFS_IMAGE)/rootfs.img
 ROOTFS_FILES += $(ROOTFS_IMAGE)/install-rootfs.image
 
-# $(ROOTFS_GZ) $(ROOTFS_UBOOT) $(ROOTFS_UBIFS): $(ROOTFS_IMAGE)
 $(ROOTFS_FILES): $(ROOTFS_IMAGE)
 
 rootfs: $(ROOTFS_IMAGE)

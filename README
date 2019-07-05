@@ -448,3 +448,94 @@ was able to recover with the following u-boot commands:
     ubi create rootfs 0x2800000 dynamic
     load mmc 0:1 $loadaddr rootfs.img
     ubi write $loadaddr rootfs $filesize
+
+
+Trying switching to rootfs loaded into memory.  First attempt was to use
+    mount -o loop ram
+but this seems to kill the kernel.
+
+Now trying:
+
+1.  Enable MTD_NAND_NANDSIM in kernel.  This gives us an extra mtd partition,
+and now we have:
+
+    $ cat /proc/mtd
+    dev:    size   erasesize  name
+    mtd0: 08000000 00004000 "NAND simulator partition 0"
+    mtd1: 00020000 00020000 "vf-bcb"
+    mtd2: 00160000 00020000 "u-boot"
+    mtd3: 00080000 00020000 "u-boot-env"
+    mtd4: 07e00000 00020000 "ubi"
+
+Once concern is just how much memory is this using...?  The simulated NAND is as
+big as our RAM, this may be an issue.
+
+2.  Can now attach ubi to this and create a volume:
+
+    ubiattach /dev/ubi_ctrl -m 0
+    ubimkvol -N testvol -m /dev/ubi1 -t static
+
+This seems to work ok, we now have /dev/ubi1_0 available.
+
+3.  Let's try loading our file image.
+
+    ubiupdatevol /dev/ubi1_0 /tmp/rootfs.img
+
+This also seems to work.  Let's see if we can mount it.
+
+    mount -t ubifs ubi1:testvol /mnt
+
+This fails with errors:
+UBIFS error (ubi1:0 pid 177): validate_sb: min. I/O unit mismatch : 2048 in superblock, 512 real
+UBIFS error (ubi1:0 pid 177): validate_sb: bad superblock, error 1
+
+Looks like a mismatch between the simulation and the image.  The image was
+created with options:
+    --space-fixup -c 8112 -e 124KiB -m 2KiB
+
+5/7/19
+
+Hmm.  I think this approach isn't going to work.  Even if we do get ubi1
+working, we're still not going to be able to switch_root to it, because only
+init can do that, and hacking init is really a step too far.
+
+Ok.  Let's do the business in u-boot instead.  For an automated approach we'll
+need to set up u-boot to do the upgrade unattended and triggered from the OS, so
+we need:
+
+1.  A way to modify the u-boot environment from the running linux.  It turns out
+    u-boot has commands fw_printenv and fw_saveenv for this job, but we'll need
+    to get them built and installed.
+
+2.  A tftp server.
+
+Turns out we have two tftp servers available on the development network:
+
+serv0002 (172.23.240.2)
+    This serves files from /tftpboot/ on the server.
+
+cs03r-cs-vserv-36 (172.23.247.36)
+    This serves files from /dls_sw/work/tftpboot/dev/ and so is more convenient.
+
+Note that fw_setenv is an alias of fw_printenv.
+
+Now need to populate /etc/wf_env.config.  This is described here:
+https://developer.ridgerun.com/wiki/index.php/Setting_up_fw_printenv_to_modify_u-boot_environment_variables
+
+and we need one line of the following form
+
+    device-name offset env-size sector-size sector-count
+
+device-name is found by searching /prod/mtd for u-boot-env (or is just /dev/mtd2
+if we're not using NANDSIM).
+
+It looks like we probably need:
+
+    /dev/mtd2 0 0x20000 0x20000 1
+
+but the description of the offset part is not too clear.  I *think* it is the
+offset into the partition, not the device.  Unfortuately if I get this wrong I'm
+going to trash my system.
+
+Ok, this works.  It looks as if offset is indeed the offset into the partition,
+and so is useful when u-boot and the environment are in the same partition.
