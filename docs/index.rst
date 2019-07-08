@@ -16,6 +16,10 @@ Contents
     :maxdepth: 2
 
     hardware
+    installing
+    upgrading
+    building
+    development
 
 :ref:`genindex`
 

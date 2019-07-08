@@ -1,0 +1,8 @@
+# Fixes to boot environment
+#
+# Provide logged in shell on console
+
+option:
+	echo 'ttyLP0::askfirst:/bin/sh -l' >>$(sysroot)/etc/inittab
+
+# vim: set filetype=make:

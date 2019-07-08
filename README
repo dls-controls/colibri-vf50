@@ -575,4 +575,19 @@ Looking at the default ubiboot command, we have::
     defargs=user_debug=30
     ubiargs=ubi.mtd=ubi root=ubi0:rootfs rw rootfstype=ubifs ubi.fm_autoconvert=1
 
-(and the others aren't defined).  So 
+(and the others aren't defined).
+
+
+Setting up to use tftp.  Store files to load in
+
+    /dls_sw/work/tftpboot/dev/colibri-vf50/
+
+Server address is 172.23.247.36, we're using 172.23.252.22/20 for our address::
+
+    setenv ipaddr 172.23.252.22
+    setenv netmask 255.255.240.0
+    setenv gatewayip 172.23.240.254
+    tftpboot $scriptaddr 172.23.247.36:/colibri-vf50/boot-script.image
+    source $scriptaddr
+
+This works just fine.

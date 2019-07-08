@@ -40,16 +40,16 @@ ncurses_TERMS = xterm xterm-color screen vt100 vt102
 
 ROOTFS_VERSION = DLS $(GIT_VERSION_SUFFIX)
 
-CONSOLE_BAUD = 115200
-CONSOLE_TTY = ttyLP0
 
 ROOT_PASSWORD = root
 
 OPTIONS += ldconfig
 LDCONFIG = once
 
+OPTIONS += $(configdir)/printenv
+OPTIONS += $(configdir)/inittab
+
 BOOT = $(configdir)/sd-card-boot
-EXTRA_BOOTARGS = ubi.mtd=ubi ubi.fm_autoconvert=1
 EXTRA_BOOTARGS = ubi.mtd=ubi
 
 OPTIONS += network
@@ -58,13 +58,5 @@ NW_ADDRESS = 172.23.252.22
 NW_NETMASK = 255.255.240.0
 NW_GATEWAY = 172.23.240.254
 NW_HOSTNAME = colibri-vf50
-
-# -----------------------------------------------------------------------------
-# Rootfs options and configuration
-
-final-install:
-	$(install) $(FW_PRINTENV) /sbin/
-	$(install) $(configdir)/fw_env.config /etc
-	ln -s fw_printenv $(sysroot)/sbin/fw_setenv
 
 # vim: set filetype=make:

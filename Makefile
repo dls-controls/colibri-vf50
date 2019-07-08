@@ -319,6 +319,7 @@ busybox-keep: $(ROOTFS_O)/build/busybox
 # Boot image
 #
 
+BOOT_FILES += $(U_BOOT_IMAGE)
 BOOT_FILES += $(ZIMAGE)
 BOOT_FILES += $(KERNEL_DTB)
 BOOT_FILES += $(ROOTFS_FILES)
