@@ -49,7 +49,7 @@ LDCONFIG = once
 OPTIONS += $(configdir)/printenv
 OPTIONS += $(configdir)/inittab
 
-BOOT = $(configdir)/sd-card-boot
+BOOT = $(configdir)/install
 EXTRA_BOOTARGS = ubi.mtd=ubi
 
 OPTIONS += network

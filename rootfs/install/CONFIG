@@ -1,4 +1,4 @@
-# Builds script for booting from SD card
+# Builds installation scripts
 
 BOOT_SCRIPT_IMAGE ?= boot-script.image
 MKIMAGE ?= mkimage
