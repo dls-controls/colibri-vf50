@@ -1,7 +1,29 @@
-# Builds installation scripts
+# Builds installation images and scripts
+#
+# We build the following three separate boot scripts and associated images.
+#
+# 1. boot-script.
+#    This is for development, and needs imagefile.cpio.gz.
+#
+# 2. install-script.
+#    This is for initial development and needs rootfs.img.
+#
+# 3. upgrade-script.
+#    This is for tft upgrade and also needs rootfs.img.
+#
+# Each of the scripts also needs a kernel image and device tree, and the upgrade
+# script needs a number of u-boot environment variables to be set, as managed by
+# the tftp-upgrade script.
 
-BOOT_SCRIPT_IMAGE ?= boot-script.image
-MKIMAGE ?= mkimage
+BOOT_SCRIPTS += initramfs-script
+BOOT_SCRIPTS += install-script
+BOOT_SCRIPTS += upgrade-script
+
+$(O)/initramfs-script: $(O)/imagefile.cpio.gz
+$(O)/install-script: $(O)/rootfs.img
+$(O)/upgrade-script: $(O)/rootfs.img
+
+$(O)/%: $(O)
 
 # These options are lifted from
 #   https://developer.toradex.com/knowledge-base/u-boot-flashing-methods
@@ -11,32 +33,23 @@ MKIMAGE ?= mkimage
 # I'm unable to find a sensible description of -c.
 MKFS_UBIFS_OPTS = --space-fixup -c 8112 -e 124KiB -m 2048
 
+# Digest the original script to transform the readable form into a form that
+# u-boot is happy with.  Remove comment lines and blank lines, and join lines
+# with trailing backslashes (deleting all leading whitespace on the next line).
+SED_COMMANDS = /^\#/d; /^$$/d;
+SED_COMMANDS += :x /\\$$/{N; s/\\\n *//; bx};
+$(O)/%-script: $(bootdir)/%-script
+	sed '$(SED_COMMANDS)' $< >$@
 
+# Wrap up u-boot scripts so u-boot can source them.
 %.image: %
-	$(MKIMAGE) -T script -d $< $@
+	mkimage -T script -d $< $@
 
-# We digest the canned script in three ways: first, remove comment lines and
-# blank lines; second, add in any extra boot arguments; and finally join \
-# separated lines.
-SED_COMMANDS =
-SED_COMMANDS += /^\#/d; /^$$/d;
-SED_COMMANDS += s/@@EXTRA_BOOTARGS@@/$(EXTRA_BOOTARGS)/;
-SED_COMMANDS += /\\$$/{N; s/\\\n//};
-
-$(O)/boot-script: $(bootdir)/initramfs-script $(O)/imagefile.cpio.gz
-	sed '$(SED_COMMANDS)' $< >$@
-
-$(O)/install-rootfs: $(bootdir)/install-rootfs $(O)/imagefile.cpio.gz
-	sed '$(SED_COMMANDS)' $< >$@
-
-
+# Construct UBIFS from the file image
 $(O)/rootfs.img: $(O)/imagefile.cpio
 	fakeroot -i $(TARGET_ROOT)/fakeroot.env \
             mkfs.ubifs $(MKFS_UBIFS_OPTS) -o $@ -r $(TARGET_ROOT)/rootfs
 
-
-boot: $(O)/imagefile.cpio.gz $(O)/$(BOOT_SCRIPT_IMAGE) $(O)/rootfs.img
-boot: $(O)/install-rootfs.image
-.PHONY: boot
+boot: $(BOOT_SCRIPTS:%=$(O)/%.image)
 
 # vim: set filetype=make:

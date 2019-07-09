@@ -1,0 +1,56 @@
+# u-boot script for installing rootfs
+#
+# This is run by the following command:
+#
+#   load mmc 0:1 $scriptaddr install-script.image && source $scriptaddr
+
+# First of all prepare the ubi space.  We start by erasing it completely, and
+# then create our partitions.  Alas if we do this on top of an existing UBI we
+# will lose the erase counters.
+nand erase.part ubi
+ubi part ubi
+
+# 4MB for kernel image (should be enough, at the time of writing our kernel is
+# around 3MB).
+ubi create kernel 0x400000 static
+# 128KB for device tree.  Our current device tree is 26K.
+ubi create dtb 0x20000 static
+# We now want a rootfs partition and an opt partition.  Let's allow 40MB for the
+# rootfs.
+ubi create rootfs 0x2800000 dynamic
+# Allocate the remainder to the state partition
+ubi create state 0 dynamic
+
+# Now populate the partitions.
+
+# Kernel
+load mmc 0:1 $loadaddr zImage
+ubi write $loadaddr kernel $filesize
+# Device tree
+load mmc 0:1 $loadaddr device-tree.dtb
+ubi write $loadaddr dtb $filesize
+# Rootfs
+load mmc 0:1 $loadaddr rootfs.img
+ubi write $loadaddr rootfs $filesize
+
+
+# Finally set up the environment needed for booting
+setenv defargs ubi.mtd=ubi
+setenv ubiargs ubiargs=ubi.mtd=ubi root=ubi0:rootfs rootfstype=ubifs ro
+setenv ubiboot '\
+    setenv bootargs $defargs $ubiargs; \
+    ubi part ubi && \
+    ubi read $kernel_addr_r kernel && \
+    ubi read $fdt_addr_r dtb && \
+    bootz $kernel_addr_r - $fdt_addr_r'
+setenv bootcmd run ubiboot
+# Helper command for development
+setenv sdboot '\
+    load mmc 0:1 $scriptaddr initramfs-script.image && \
+    source $scriptaddr'
+saveenv
+
+# All done, boot into the new system
+boot
+
+# vim: set filetype=sh:

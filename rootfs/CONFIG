@@ -13,8 +13,6 @@ PACKAGES += dropbear
 INETD_ENABLE = y
 # Temporary use of predefined keys to save time
 DROPBEAR_KEYS = y
-# Disable use of passwords for ssh login
-# DROPBEAR_OPTS = -s
 
 PACKAGES += ntp
 
@@ -43,14 +41,15 @@ ROOTFS_VERSION = DLS $(GIT_VERSION_SUFFIX)
 
 ROOT_PASSWORD = root
 
-OPTIONS += ldconfig
-LDCONFIG = once
+# OPTIONS += ldconfig
+# LDCONFIG = once
+# LDCONFIG = cross
 
 OPTIONS += $(configdir)/printenv
 OPTIONS += $(configdir)/inittab
 
 BOOT = $(configdir)/install
-EXTRA_BOOTARGS = ubi.mtd=ubi
+# EXTRA_BOOTARGS = ubi.mtd=ubi
 
 OPTIONS += network
 NW_PORT = eth0

@@ -26,14 +26,10 @@ TAR_FILES += /dls_sw/work/targetOS/tar-files
 include CONFIG
 include $(TOOLCHAIN)
 
+export GIT_VERSION_SUFFIX = \
+    $(shell git describe --abbrev=7 --dirty --always --tags)
 
 export CROSS_COMPILE = $(COMPILER_PREFIX)-
-
-BUILD_ROOT = $(BUILD_TOP)/build
-SRC_ROOT = $(BUILD_TOP)/src
-TOOLKIT_ROOT = $(BUILD_TOP)/toolkit
-BOOT_ROOT = $(BUILD_TOP)/boot
-
 
 ARCH = arm
 export PATH := $(BINUTILS_DIR)/bin:$(TOOLKIT_ROOT)/bin:$(PATH)
@@ -41,6 +37,13 @@ export PATH := $(BINUTILS_DIR)/bin:$(TOOLKIT_ROOT)/bin:$(PATH)
 # (we'll revisit this)
 # Both kernel and u-boot builds need CROSS_COMPILE and ARCH to be exported
 EXPORTS = $(call EXPORT,CROSS_COMPILE ARCH)
+
+
+BUILD_ROOT = $(BUILD_TOP)/build
+SRC_ROOT = $(BUILD_TOP)/src
+TOOLKIT_ROOT = $(BUILD_TOP)/toolkit
+BOOT_ROOT = $(BUILD_TOP)/boot
+
 
 
 # ------------------------------------------------------------------------------
@@ -200,7 +203,8 @@ KERNEL_SRC = $(SRC_ROOT)/$(KERNEL_NAME)
 KERNEL_BUILD = $(BUILD_ROOT)/linux
 
 ZIMAGE = $(KERNEL_BUILD)/arch/arm/boot/zImage
-KERNEL_DTB = $(KERNEL_BUILD)/arch/arm/boot/dts/vf500-colibri-eval-v3.dtb
+KERNEL_DTS_DIR = $(KERNEL_BUILD)/arch/arm/boot/dts/
+KERNEL_DTB = $(KERNEL_DTS_DIR)/device-tree.dtb
 
 MAKE_KERNEL = $(EXPORTS) KBUILD_OUTPUT=$(KERNEL_BUILD) $(MAKE) -C $(KERNEL_SRC)
 
@@ -217,8 +221,10 @@ $(ZIMAGE): $(KERNEL_BUILD)/.config
 	$(MAKE_KERNEL) zImage
 	touch $@
 
-$(KERNEL_DTB):
-	$(MAKE_KERNEL) vf500-colibri-eval-v3.dtb
+$(KERNEL_DTB): kernel/device-tree.dts
+	mkdir -p $(KERNEL_DTS_DIR)
+	cp $^ $(KERNEL_DTS_DIR)
+	$(MAKE_KERNEL) device-tree.dtb
 
 kernel-menuconfig: $(KERNEL_BUILD)/.config
 	$(MAKE_KERNEL) menuconfig
@@ -292,9 +298,10 @@ $(ROOTFS_IMAGE): $(shell find rootfs -type f) $(U_BOOT_IMAGE) $(FW_PRINTENV)
 
 
 ROOTFS_FILES += $(ROOTFS_IMAGE)/imagefile.cpio.gz
-ROOTFS_FILES += $(ROOTFS_IMAGE)/boot-script.image
 ROOTFS_FILES += $(ROOTFS_IMAGE)/rootfs.img
-ROOTFS_FILES += $(ROOTFS_IMAGE)/install-rootfs.image
+ROOTFS_FILES += $(ROOTFS_IMAGE)/initramfs-script.image
+ROOTFS_FILES += $(ROOTFS_IMAGE)/install-script.image
+ROOTFS_FILES += $(ROOTFS_IMAGE)/upgrade-script.image
 
 $(ROOTFS_FILES): $(ROOTFS_IMAGE)
 
@@ -323,10 +330,6 @@ BOOT_FILES += $(U_BOOT_IMAGE)
 BOOT_FILES += $(ZIMAGE)
 BOOT_FILES += $(KERNEL_DTB)
 BOOT_FILES += $(ROOTFS_FILES)
-# BOOT_FILES += $(ROOTFS_GZ)
-# BOOT_FILES += $(ROOTFS_UBOOT)
-# BOOT_FILES += $(ROOTFS_UBIFS)
-# BOOT_FILES += $(ROOTFS_INSTALL)
 
 boot: $(BOOT_FILES)
 	rm -rf $(BOOT_ROOT)

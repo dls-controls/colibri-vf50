@@ -130,12 +130,12 @@ procedure:
         Err:   serial
         Model: Toradex Colibri VF50 128MB V1.2B, Serial# 06317506
         Net:   FEC
-        Hit any key to stop autoboot:  0 
+        Hit any key to stop autoboot:  0
         Colibri VFxx #
 
 8.  At the uboot prompt type the following::
 
-        load mmc 0:1 $scriptaddr install-rootfs.image && source $scriptaddr
+        load mmc 0:1 $scriptaddr install-script.image && source $scriptaddr
 
     This will flash the initial version of the system and boot into it.
 
