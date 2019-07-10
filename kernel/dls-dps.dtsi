@@ -12,39 +12,6 @@
         ethernet0 = &fec1;
     };
 
-    clk16m: clk16m {
-        compatible = "fixed-clock";
-        #clock-cells = <0>;
-        clock-frequency = <16000000>;
-    };
-
-    reg_3v3: regulator-3v3 {
-        compatible = "regulator-fixed";
-        regulator-name = "3.3V";
-        regulator-min-microvolt = <3300000>;
-        regulator-max-microvolt = <3300000>;
-        regulator-always-on;
-    };
-
-    reg_5v0: regulator-5v0 {
-        compatible = "regulator-fixed";
-        regulator-name = "5V";
-        regulator-min-microvolt = <5000000>;
-        regulator-max-microvolt = <5000000>;
-        regulator-always-on;
-    };
-
-    reg_usbh_vbus: regulator-usbh-vbus {
-        compatible = "regulator-fixed";
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_usbh1_reg>;
-        regulator-name = "VCC_USB[1-4]";
-        regulator-min-microvolt = <5000000>;
-        regulator-max-microvolt = <5000000>;
-        gpio = <&gpio2 19 GPIO_ACTIVE_LOW>; /* USBH_PEN resp. USBH_P_EN */
-        vin-supply = <&reg_5v0>;
-    };
-
     gpio-keys {
         compatible = "gpio-keys";
         pinctrl-names = "default";
@@ -52,19 +19,8 @@
     };
 };
 
-/* Colibri SPI */
-&dspi1 {
-    status = "okay";
-
-    spidev0: spidev@0 {
-        compatible = "toradex,evalspi";
-        reg = <0>;
-        spi-max-frequency = <50000000>;
-        status = "okay";
-    };
-};
-
-&dspi0 {
+/* Serial console. */
+&uart0 {
     status = "okay";
 };
 
@@ -76,30 +32,31 @@
     status = "okay";
 };
 
-/* Need to add sensor here. */
+/* Colibri SPI to digital control FPGA */
+&dspi1 {
+    status = "okay";
+
+    spidev0: spidev@0 {
+        compatible = "toradex,evalspi";
+        reg = <0>;
+        spi-max-frequency = <50000000>;
+        status = "okay";
+    };
+};
+
+/* Colibri SPI to ADC FPGA */
+&dspi0 {
+    status = "okay";
+};
+
+/* I2C bus to temperature sensor. */
 &i2c0 {
     status = "okay";
 
-};
-
-&pwm0 {
-    status = "okay";
-};
-
-&pwm1 {
-    status = "okay";
-};
-
-&reg_module_3v3 {
-    vin-supply = <&reg_3v3>;
-};
-
-&tcon0 {
-    status = "okay";
-};
-
-&uart0 {
-    status = "okay";
+    temp1: ad7414@48 {
+        compatible = "ad,ad7414";
+        reg = <0x48>;
+    };
 };
 
 &iomuxc {
