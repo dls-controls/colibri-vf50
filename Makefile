@@ -221,7 +221,7 @@ $(ZIMAGE): $(KERNEL_BUILD)/.config
 	$(MAKE_KERNEL) zImage
 	touch $@
 
-$(KERNEL_DTB): kernel/device-tree.dts
+$(KERNEL_DTB): kernel/device-tree.dts kernel/dls-dps.dtsi
 	mkdir -p $(KERNEL_DTS_DIR)
 	cp $^ $(KERNEL_DTS_DIR)
 	$(MAKE_KERNEL) device-tree.dtb

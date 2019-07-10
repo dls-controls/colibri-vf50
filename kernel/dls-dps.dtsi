@@ -1,0 +1,113 @@
+/* This file is derived from vf-colibri-eval-v3.dtsi, but is cut down and
+ * modified for use with the DLS Digital Power Supply. */
+
+#include <dt-bindings/input/input.h>
+
+/ {
+    chosen {
+        stdout-path = "serial0:115200n8";
+    };
+
+    aliases {
+        ethernet0 = &fec1;
+    };
+
+    clk16m: clk16m {
+        compatible = "fixed-clock";
+        #clock-cells = <0>;
+        clock-frequency = <16000000>;
+    };
+
+    reg_3v3: regulator-3v3 {
+        compatible = "regulator-fixed";
+        regulator-name = "3.3V";
+        regulator-min-microvolt = <3300000>;
+        regulator-max-microvolt = <3300000>;
+        regulator-always-on;
+    };
+
+    reg_5v0: regulator-5v0 {
+        compatible = "regulator-fixed";
+        regulator-name = "5V";
+        regulator-min-microvolt = <5000000>;
+        regulator-max-microvolt = <5000000>;
+        regulator-always-on;
+    };
+
+    reg_usbh_vbus: regulator-usbh-vbus {
+        compatible = "regulator-fixed";
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_usbh1_reg>;
+        regulator-name = "VCC_USB[1-4]";
+        regulator-min-microvolt = <5000000>;
+        regulator-max-microvolt = <5000000>;
+        gpio = <&gpio2 19 GPIO_ACTIVE_LOW>; /* USBH_PEN resp. USBH_P_EN */
+        vin-supply = <&reg_5v0>;
+    };
+
+    gpio-keys {
+        compatible = "gpio-keys";
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_gpiokeys>;
+    };
+};
+
+/* Colibri SPI */
+&dspi1 {
+    status = "okay";
+
+    spidev0: spidev@0 {
+        compatible = "toradex,evalspi";
+        reg = <0>;
+        spi-max-frequency = <50000000>;
+        status = "okay";
+    };
+};
+
+&dspi0 {
+    status = "okay";
+};
+
+/* Ethernet interface */
+&fec1 {
+    phy-mode = "rmii";
+    pinctrl-names = "default";
+    pinctrl-0 = <&pinctrl_fec1>;
+    status = "okay";
+};
+
+/* Need to add sensor here. */
+&i2c0 {
+    status = "okay";
+
+};
+
+&pwm0 {
+    status = "okay";
+};
+
+&pwm1 {
+    status = "okay";
+};
+
+&reg_module_3v3 {
+    vin-supply = <&reg_3v3>;
+};
+
+&tcon0 {
+    status = "okay";
+};
+
+&uart0 {
+    status = "okay";
+};
+
+&iomuxc {
+    vf610-colibri {
+        pinctrl_gpiokeys: gpiokeys {
+            fsl,pins = <
+                VF610_PAD_PTB19__GPIO_41    0x218d
+            >;
+        };
+    };
+};
