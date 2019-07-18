@@ -1,0 +1,98 @@
+#!/bin/sh
+
+# Script to trigger upgrade of root file system.  This configures the u-boot
+# environment to load and execute the upgrade-script.
+
+Error() { echo >&2 "$@"; exit 1; }
+
+
+TFTP_PREFIX=/
+TFTP_SERVER=none
+
+# Pick up defaults
+[ -e /etc/upgrade.config ]  &&
+source /etc/upgrade.config
+
+UPGRADE_ROOTFS=false
+UPGRADE_KERNEL=false
+UPGRADE_DTS=false
+
+# Process options
+while getopts 'P:S:rkdh' option; do
+    case "$option" in
+        P)  TFTP_PREFIX="$OPTARG" ;;
+        S)  TFTP_SERVER="$OPTARG" ;;
+        r)  UPGRADE_ROOTFS=true ;;
+        k)  UPGRADE_KERNEL=true ;;
+        d)  UPGRADE_DTS=true ;;
+        h)  cat <<EOF
+Usage: upgrade-rootfs server-ip:
+Configures upgrade of root file system from tftp server.
+    -P: Specify TFTP prefix (default is $TFTP_PREFIX)
+    -S: Specify TFTP server (default is $TFTP_SERVER)
+    -k  Upgrade kernel (${TFTP_PREFIX}zImage must be present on server)
+    -d  Upgrade device tree (${TFTP_PREFIX}device-tree.dtb must be present on
+        server)
+    -r  Upgrade rootfs (${TFTP_PREFIX}upgrade-script.image and
+        ${TFTP_PREFIX}rootfs.img must be present on server)
+EOF
+            exit 0 ;;
+        *)  Error 'Invalid option: try -h for help' ;;
+    esac
+done
+
+# Ensure that we've got something to do
+$UPGRADE_ROOTFS || $UPGRADE_KERNEL || $UPGRADE_DTS ||
+    Error Must specify at least one target to upgrade
+
+
+# Normalise the server name and check it is responding
+set -o pipefail
+serverip="$(getent hosts "$TFTP_SERVER" | sed 's/ .*//')"  ||
+    Error Unable to look up TFTP server "$TFTP_SERVER"
+
+# Retrieve named file from TFTP server
+tftp_get()
+{
+    echo "Reading $1 from $TFTP_SERVER ($serverip)"
+    tftp -g -l /tmp/$1 -r "$TFTP_PREFIX"$1 $serverip  ||
+        Error "Unable to read $TFTP_PREFIX$1"
+}
+
+
+# We can do the kernel and device tree upgrades here and now.
+if $UPGRADE_KERNEL; then
+    tftp_get zImage
+    ubiupdatevol /dev/ubi0_0 /tmp/device-tree.dtb
+fi
+
+if $UPGRADE_DTS; then
+    tftp_get device-tree.dtb
+    ubiupdatevol /dev/ubi0_1 /tmp/device-tree.dtb
+fi
+
+
+# We need to hand control over to u-boot to do the rootfs upgrade.
+if $UPGRADE_ROOTFS; then
+    # Check that the upgrade script is present on the TFTP server, fail if not.
+    tftp_get upgrade-script.image
+
+    # Pick up our ethernet configuration
+    ipaddr=$(ifconfig eth0 | sed -n '/.* addr:/{s///; s/ .*//; p;q}')
+    netmask=$(ifconfig eth0 | sed -n '/.* Mask:/{s///; s/ .*//; p;q}')
+    gatewayip=$(ip route | sed -n '/default via /{s///; s/ .*//; p;q}')
+
+    # Update the u-boot environment
+    cat <<EOF |
+ipaddr $ipaddr
+netmask $netmask
+gatewayip $gatewayip
+serverip $serverip
+server_prefix $TFTP_PREFIX
+bootcmd tftpboot \$scriptaddr \${server_prefix}upgrade-script.image  &&  \
+source \$scriptaddr
+EOF
+    fw_setenv -s /dev/stdin  &&
+    # Go!
+    reboot
+fi

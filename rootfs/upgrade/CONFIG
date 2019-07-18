@@ -1,0 +1,11 @@
+# Support for upgrading installed system.
+
+# Interestingly, we are installing getent from sysroot.  This probably belongs
+# in the main rootfs build.
+
+option:
+	$(install) -x $(SYSROOT)/usr/bin/getent /usr/bin
+	$(install) -x $(optiondir)/upgrade-rootfs /sbin
+	$(install) $(optiondir)/upgrade.config /etc
+
+# vim: set filetype=make:

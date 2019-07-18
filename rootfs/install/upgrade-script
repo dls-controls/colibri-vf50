@@ -1,3 +1,10 @@
-# Script for upgrading
+# Script for upgrading rootfs from u-boot.
 
-blah
+echo Upgrading from $serverip:$server_prefix
+tftpboot $loadaddr ${server_prefix}rootfs.img  &&
+ubi part ubi  &&
+ubi write $loadaddr rootfs $filesize
+
+# Restore the original boot command
+setenv bootcmd run ubiboot
+boot

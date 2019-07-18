@@ -30,7 +30,7 @@ PACKAGES += ethtool
 PACKAGES += iperf
 # PACKAGES += i2c-tools
 
-ncurses_TERMS = xterm xterm-color screen vt100 vt102
+ncurses_TERMS = xterm xterm-color xterm-256color screen vt100 vt102
 
 
 # -----------------------------------------------------------------------------
@@ -47,9 +47,9 @@ ROOT_PASSWORD = root
 
 OPTIONS += $(configdir)/printenv
 OPTIONS += $(configdir)/inittab
+OPTIONS += $(configdir)/upgrade
 
 BOOT = $(configdir)/install
-# EXTRA_BOOTARGS = ubi.mtd=ubi
 
 OPTIONS += network
 NW_PORT = eth0
