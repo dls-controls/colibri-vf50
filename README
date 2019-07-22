@@ -73,11 +73,11 @@ We have the following definitions in the u-boot environment:
 
 #define DFU_ALT_NAND_INFO "vf-bcb part 0,1;u-boot part 0,2;ubi part 0,4"
 
-#define MTDPARTS_DEFAULT	"mtdparts=vf610_nfc:"		\
-				"128k(vf-bcb)ro,"		\
-				"1408k(u-boot)ro,"		\
-				"512k(u-boot-env),"		\
-				"-(ubi)"
+#define MTDPARTS_DEFAULT    "mtdparts=vf610_nfc:"       \
+                "128k(vf-bcb)ro,"       \
+                "1408k(u-boot)ro,"      \
+                "512k(u-boot-env),"     \
+                "-(ubi)"
 
         BOOTENV \
 
@@ -591,3 +591,154 @@ Server address is 172.23.247.36, we're using 172.23.252.22/20 for our address::
     source $scriptaddr
 
 This works just fine.
+
+18/7/19
+
+Now have working upgrade process.  Major loose ends:
+
+*   Documenting upgrade process and making workflow clear.
+*   Sorting out persistent state and network configuration.
+*   Device tree: GPIOs and SPI.
+
+Trying to figure out how to do GPIOs.  Am making progress with SPI0 device by
+copying definitions from vf610-twr.dts (this contains a 'bus-num = <0>' line,
+which we seem to need:
+
+
+    &dspi0 {
+        bus-num = <0>;
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_dspi0>;
+        status = "okay";
+
+        spidev0: spidev@0 {
+            compatible = "toradex,evalspi";
+            reg = <0>;
+            spi-max-frequency = <10000000>;     /* 10 MHz */
+            status = "okay";
+        };
+    };
+
+    &iomuxc {
+        vf610-colibri {
+            pinctrl_gpiokeys: gpiokeys {
+                fsl,pins = <
+                    VF610_PAD_PTB19__GPIO_41    0x218d
+                >;
+            };
+
+            pinctrl_dspi0: dspi0grp {
+                fsl,pins = <
+                    VF610_PAD_PTB19__DSPI0_CS0      0x1182
+                    VF610_PAD_PTB20__DSPI0_SIN      0x1181
+                    VF610_PAD_PTB21__DSPI0_SOUT     0x1182
+                    VF610_PAD_PTB22__DSPI0_SCK      0x1182
+                >;
+            };
+        };
+    };
+
+However, this produces the following conflict messages from the kernel:
+
+vf610-pinctrl 40048000.iomuxc: pin VF610_PAD_PTB21 already requested by 40048000.iomuxc; cannot claim for 4002c000.dspi0
+vf610-pinctrl 40048000.iomuxc: pin-43 (4002c000.dspi0) status -22
+vf610-pinctrl 40048000.iomuxc: could not request pin 43 (VF610_PAD_PTB21) from group dspi0grp  on device 40048000.iomuxc
+fsl-dspi 4002c000.dspi0: Error applying setting, reverse things back
+
+The only other reference to VF610_PAD_PTB21 seems to be in vf-colibri.dtsi:
+
+    &iomuxc {
+        ...
+        vf610-colibri {
+            ...
+            pinctrl_hog_0: hoggrp-0 {
+                fsl,pins = <
+                    ...
+                    VF610_PAD_PTB21__GPIO_43    0x22ed
+                    ...
+                >;
+                ...
+            };
+            ...
+        };
+    };
+
+22/7/19
+
+So it seems that the most straightforward way do deal with this is to completely
+replace the pinctrl_hog_0 group.  Looking at GPIO definitions seems to be an
+immense can of worms.  Here is a useful reference:
+
+    https://developer.toradex.com/knowledge-base/gpio-alphanumeric-to-gpio-numeric-assignment
+
+It seems that we need to worry about five names for each GPIO pin:
+
+1.  Module Pin Name.  This is the descriptive name in the Colibri module
+    documentation.
+2.  Module Pin Number.  This is the corresponding pin number on the Colibri
+    SODIMM connector.
+3.  SOC Pin Name.  This is the pin name in the corresponding chip documentation,
+    and is used as part of the kernel name when referencing the pin.
+4.  SOC GPIO Name.  Don't know what this is.
+5.  GPIO number.  This is the number used by the kernel to reference the pin,
+    and appears to have no relationship with any of the other numbers.  Looks
+    like we need to use the table above for this.
+
+Actually, the mapping table (pp 21-25 of Colibri VFxx Datasheet) records the
+GPIO number as PORTn[m] and it turns out that the Linux port number is actually
+simply 32*n+m.
+
+We need to use the following GPIOs and analogue inputs:
+
+J3  Fn          SOC         GPIO
+--  --          ---         ----
+43  SPI0 RXD    PTB20       P1[10]  42
+55  XL TRIG     PTB17       P1[7]   39
+71  SPI0 CS     PTC0        P1[13]  45      This is SPI0_PCS3
+73  SPI0 TXD    PTB21       P1[11]  43
+77  SPI0 CLK    PTB22       P1[12]  44
+89  SPARE 3     PTA9        P0[2]   2
+93  SPARE 4     PTB28       P3[2]   98
+95  SPARE 5     PTC30       P3[7]   103
+99  SPARE 6     PTD29       P2[1]   65
+127 SW1-8       PTD26       P2[4]   68
+129 SW1-4       PTD4        P2[19]  83
+131 SW1-2       PTE3        P3[12]  108
+133 SW1-1       PTD9        P2[24]  88
+135 SPARE 1     PTD10       P2[25]  89
+137 SPARE 2     PTC29       P3[6]   102     (Mux with USB0_VBUS_DETECT)
+2   VCC1V0      ADC1_SE9
+4   VCC5V0      ADC0_SE9
+6   VCC3V3      ADC1_SE8
+8   VCC1V8      ADC0_SE8
+??  VCC1V2      ??
+86  SPI1 CS     PTD5        P2[20]  84      Already configured
+88  SPI1 CLK    PTD8        P2[23]  87      /
+90  SPI1 RXD    PTD6        P2[21]  85      /
+92  SPI1 TXT    PTD7        P2[22]  86      /
+98  A INIT B    PTC1        P1[14]  46
+100 A DONE      PTD13       P2[28]  92
+102 A PROG B    PTA12       P0[5]   5
+104 A DSO       PTD28       P2[2]   66
+106 A CLK       PTD31       P1[31]  63
+134 INIT B M1   PTA17       P0[7]   7       Programming on-board FPGA
+136 DONE M1     PTE21       P3[30]  126     /
+138 PROG B M1   PTE22       P3[31]  127     /
+140 DSO M1      PTE13       P3[22]  118     /
+142 CLK M1      PTE14       P3[23]  119     /
+144 SPARE 7     PTE5        P3[14]  110
+146 SPARE 8     PTE6        P3[15]  111
+184 SPARE 9     PTD25       P2[5]   69
+
+We need the following functions:
+
+SPI0    Pins 43, 55, 71, 73, 77.  Think I have this configured, but I need to
+        get the driver working.
+SPI1    Pins configured out of the box, same driver issue as SPI0.
+SW1     Pins 127, 129, 131, 133 to be configured as GPIO and read.
+SPARE   To be ignored
+ADC     Pins 2, 4, 6, 8, 14.  Think all except 14 configured out of the box (or
+        don't need configuring), but 14 needs configuring.
+FPGA    Pins 134, 136, 138, 140, 142 need to be configured as GPIO ... unless
+        programming is so slow we can't use user-space IO.
+XL TRIG Pin 55.  GPIO, not sure what this is for.

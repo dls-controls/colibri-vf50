@@ -11,12 +11,6 @@
     aliases {
         ethernet0 = &fec1;
     };
-
-    gpio-keys {
-        compatible = "gpio-keys";
-        pinctrl-names = "default";
-        pinctrl-0 = <&pinctrl_gpiokeys>;
-    };
 };
 
 /* Serial console. */
@@ -32,21 +26,31 @@
     status = "okay";
 };
 
-/* Colibri SPI to digital control FPGA */
-&dspi1 {
+/* Colibri SPI to ADC FPGA */
+&dspi0 {
+    bus-num = <0>;
+    pinctrl-names = "default";
+    pinctrl-0 = <&pinctrl_dspi0>;
     status = "okay";
 
     spidev0: spidev@0 {
         compatible = "toradex,evalspi";
         reg = <0>;
-        spi-max-frequency = <50000000>;
+        spi-max-frequency = <10000000>;     /* 10 MHz */
         status = "okay";
     };
 };
 
-/* Colibri SPI to ADC FPGA */
-&dspi0 {
+/* Colibri SPI to digital control FPGA */
+&dspi1 {
     status = "okay";
+
+    spidev1: spidev@0 {
+        compatible = "toradex,evalspi";
+        reg = <0>;
+        spi-max-frequency = <10000000>;     /* 10 MHz */
+        status = "okay";
+    };
 };
 
 /* I2C bus to temperature sensor. */
@@ -59,12 +63,68 @@
     };
 };
 
+&adc0 {
+    status = "okay";
+};
+
+&adc1 {
+    status = "okay";
+};
+
+/* GPIO IO Mux bit assignments:
+ *  SPEED   0x0000      50 MHz
+ *          0x1000      100 MHz
+ *          0x3000      200 MHz
+ *  SRE     0x0000      Slow slew rate
+ *          0x0800      Fast slew rate
+ *  HYS     0x0200      Schmitt trigger input
+ */
 &iomuxc {
     vf610-colibri {
-        pinctrl_gpiokeys: gpiokeys {
+        /* We configure the general purpose GPIOs here.  We overwrite the
+         * original pinctrl_hog_0 group to free up GPIOs we need elsewhere. */
+        pinctrl_hog_0: hoggrp-0 {
             fsl,pins = <
-                VF610_PAD_PTB19__GPIO_41    0x218d
+                /* XL TRIG input. */
+                VF610_PAD_PTB17__GPIO_39    0x0201
+                /* Input switch. */
+                VF610_PAD_PTD26__GPIO_68    0x0001      // SW1-8
+                VF610_PAD_PTD4__GPIO_83     0x0001      // SW1-4
+                VF610_PAD_PTE3__GPIO_108    0x0001      // SW1-2
+                VF610_PAD_PTD9__GPIO_88     0x0001      // SW1-1
+                /* SPARE 1 to SPARE 9.  Currently input and output disabled. */
+                VF610_PAD_PTD10__GPIO_89    0x0000      // SPARE 1
+                VF610_PAD_PTC29__GPIO_102   0x0000      // SPARE 2
+                VF610_PAD_PTA9__GPIO_2      0x0000      // SPARE 3
+                VF610_PAD_PTB28__GPIO_98    0x0000      // SPARE 4
+                VF610_PAD_PTC30__GPIO_103   0x0000      // SPARE 5
+                VF610_PAD_PTD29__GPIO_65    0x0000      // SPARE 6
+                VF610_PAD_PTE5__GPIO_110    0x0000      // SPARE 7
+                VF610_PAD_PTE6__GPIO_111    0x0000      // SPARE 8
+                VF610_PAD_PTD25__GPIO_69    0x0000      // SPARE 9
+                /* DPS ADC FPGA programming. */
+                VF610_PAD_PTC1__GPIO_46     0x0001      // ADC INIT B
+                VF610_PAD_PTD13__GPIO_92    0x0001      // ADC DONE
+                VF610_PAD_PTA12__GPIO_5     0x00ce      // ADC PROG B
+                VF610_PAD_PTD28__GPIO_66    0x00c2      // ADC DSO
+                VF610_PAD_PTD31__GPIO_63    0x00c2      // ADC CLK
+                /* Digital Interface FPGA programming. */
+                VF610_PAD_PTA17__GPIO_7     0x0001      // INIT B
+                VF610_PAD_PTE13__GPIO_118   0x0001      // DONE
+                VF610_PAD_PTE22__GPIO_127   0x00ce      // PROG B
+                VF610_PAD_PTE13__GPIO_118   0x00c2      // DSO
+                VF610_PAD_PTE14__GPIO_119   0x00c2      // CLK
             >;
         };
+
+        pinctrl_dspi0: dspi0grp {
+            fsl,pins = <
+                VF610_PAD_PTC0__DSPI0_CS3       0x1182
+                VF610_PAD_PTB20__DSPI0_SIN      0x1181
+                VF610_PAD_PTB21__DSPI0_SOUT     0x1182
+                VF610_PAD_PTB22__DSPI0_SCK      0x1182
+            >;
+        };
+
     };
 };
