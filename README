@@ -742,3 +742,43 @@ ADC     Pins 2, 4, 6, 8, 14.  Think all except 14 configured out of the box (or
 FPGA    Pins 134, 136, 138, 140, 142 need to be configured as GPIO ... unless
         programming is so slow we can't use user-space IO.
 XL TRIG Pin 55.  GPIO, not sure what this is for.
+
+23/7/19
+
+Ok, we now have what seems to be a fairly complete device tree.  Now have the
+following loose ends:
+
+* Need to figure out how to talk to SPI
+* How do we talk to the ADC?
+* How are we going to use the general GPIOs?  Standard approach seems to be to
+  write GPIO number to /sys/class/gpio/export and use associated gpioNN file.
+* What about FPGA programming?  Is it going to be fast enough?
+
+The ADC driver is fsl,vf610-adc, and it seems we need IIO enabled.  This is
+documented here:
+
+    https://developer.toradex.com/knowledge-base/adc-(linux)#Colibri_VFxx
+
+Looks like we find our devices at /sys/bus/iio/devices/iio:device{0,1}
+
+We do also have iio devices in /dev, but no idea how to use them.
+
+Notes on configuring device tree:
+
+1.  Most useful reference is on pp 21-25 of Colibri VFxx Datasheet.
+2.  Search in $KERNEL_SRC/arch/arm/boot/dts for appropriate definitions
+
+Our device tree has the following include structure:
+
+    device-tree.dts     -- copied from vf500-colibri-eval-v3.dts
+    +-- vf500-colibri.dtsi                  VF50 Colibri module
+    |   +-- vf500.dtsi                      VF50 SoC functionality
+    |   |   +-- skeleton.dtsi               Minimal device tree
+    |   |   +-- vfxxx.dtsi                  Defines VFxx SoC
+    |   |   |   +-- vf610-pinfunc.h         Pin IO definitions
+    |   |   |   +-- dt-bindings/clock/vf610-clock.h
+    |   |   |   +-- dt-bindings/interrupt-controller/irq.h
+    |   |   |   +-- dt-bindings/gpio/gpio.h
+    |   |   +-- dt-bindings/interrupt-controller/arm-gic.h
+    |   +-- vf-colibri.dtsi                 General VF Colibri
+    +-- dls-dps.dtsi    -- copied from vf-colibri-eval-v3.dtsi

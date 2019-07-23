@@ -1,7 +1,6 @@
-/* This file is derived from vf-colibri-eval-v3.dtsi, but is cut down and
- * modified for use with the DLS Digital Power Supply. */
-
-#include <dt-bindings/input/input.h>
+/* Device tree definitions specific to the Diamond Digital Power Supply carrier
+ * board.  This file builds on the vf500-colibri.dtsi definitions for the
+ * Toradex Colibri VF50 module. */
 
 / {
     chosen {
