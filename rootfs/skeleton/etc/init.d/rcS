@@ -1,0 +1,3 @@
+
+# After startup can free up /mnt
+umount /mnt

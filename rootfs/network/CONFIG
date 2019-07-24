@@ -1,0 +1,12 @@
+# Network configuration
+
+# Pick up the state tree definitions
+include $(configdir)/skeleton/COMMON
+
+option:
+	$(install-files) $(optiondir)/file-list
+	$(install-state-files) $(optiondir)/state-file-list
+	$(startup) $(optiondir)/network
+	$(startup) $(optiondir)/dropbear-keys S020
+
+# vim: set filetype=make:

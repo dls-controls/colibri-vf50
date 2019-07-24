@@ -15,10 +15,10 @@ ubi part ubi
 ubi create kernel 0x400000 static
 # 128KB for device tree.  Our current device tree is 26K.
 ubi create dtb 0x20000 static
-# We now want a rootfs partition and an opt partition.  Let's allow 40MB for the
-# rootfs.
-ubi create rootfs 0x2800000 dynamic
-# Allocate the remainder to the state partition
+# We now want a rootfs partition and an opt partition.  Let's allow 10MB for the
+# rootfs, and don't allow it to be modified at all!
+ubi create rootfs 0xA00000 static
+# Allocate the remainder to the state partition, leave this writeable.
 ubi create state 0 dynamic
 
 # Now populate the partitions.
@@ -32,6 +32,9 @@ ubi write $loadaddr dtb $filesize
 # Rootfs
 load mmc 0:1 $loadaddr rootfs.img
 ubi write $loadaddr rootfs $filesize
+# Writeable persistent state
+load mmc 0:1 $loadaddr state.img
+ubi write $loadaddr state $filesize
 
 
 # Finally set up the environment needed for booting

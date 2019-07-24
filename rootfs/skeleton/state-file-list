@@ -1,4 +1,6 @@
 # Directories to place on writeable state filesystem
-
-d 770 /root
-d 770 /opt
+d 750 /root
+d 700 /root/.ssh
+d 755 /opt
+d 755 /state
+d 755 /state/etc

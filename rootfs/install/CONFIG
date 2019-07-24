@@ -15,6 +15,11 @@
 # script needs a number of u-boot environment variables to be set, as managed by
 # the tftp-upgrade script.
 
+
+# Pick up the state tree definitions
+include $(configdir)/skeleton/COMMON
+
+
 BOOT_SCRIPTS += initramfs-script
 BOOT_SCRIPTS += install-script
 BOOT_SCRIPTS += upgrade-script
@@ -50,6 +55,9 @@ $(O)/rootfs.img: $(O)/imagefile.cpio
 	fakeroot -i $(TARGET_ROOT)/fakeroot.env \
             mkfs.ubifs $(MKFS_UBIFS_OPTS) -o $@ -r $(TARGET_ROOT)/rootfs
 
-boot: $(BOOT_SCRIPTS:%=$(O)/%.image)
+$(O)/state.img: $(stateroot)
+	mkfs.ubifs $(MKFS_UBIFS_OPTS) -o $@ -r $<
+
+boot: $(BOOT_SCRIPTS:%=$(O)/%.image) $(O)/state.img
 
 # vim: set filetype=make:

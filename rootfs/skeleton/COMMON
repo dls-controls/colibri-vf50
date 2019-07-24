@@ -1,0 +1,9 @@
+# Definitions for state directory
+
+# The state file system is build here
+stateroot = $(TARGET_ROOT)/state
+
+install-state-files = \
+    sysroot=$(stateroot) fakeroot_list=/dev/null $(scripts)/install-files
+
+# vim: set filetype=make:

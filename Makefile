@@ -299,6 +299,7 @@ $(ROOTFS_IMAGE): $(shell find rootfs -type f) $(U_BOOT_IMAGE) $(FW_PRINTENV)
 
 ROOTFS_FILES += $(ROOTFS_IMAGE)/imagefile.cpio.gz
 ROOTFS_FILES += $(ROOTFS_IMAGE)/rootfs.img
+ROOTFS_FILES += $(ROOTFS_IMAGE)/state.img
 ROOTFS_FILES += $(ROOTFS_IMAGE)/initramfs-script.image
 ROOTFS_FILES += $(ROOTFS_IMAGE)/install-script.image
 ROOTFS_FILES += $(ROOTFS_IMAGE)/upgrade-script.image

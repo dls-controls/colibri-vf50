@@ -791,3 +791,8 @@ the kernel via the device tree!  In U-boot we have
 The partitions appear here:
 
     /sys/firmware/devicetree/base/soc/aips-bus@40080000/nand@400e0000/nand@0
+
+24/7/19
+
+Sorting out persistent variable state (after which it's going to be tempting to
+make the rootfs completely read-only).

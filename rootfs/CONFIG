@@ -9,12 +9,13 @@ busybox_VERSION = 1.31.0
 busybox_CONFIG = $(configdir)/busybox.config
 INSTALL_UDHCPC_SCRIPT = n
 
+# Suppress first time generation of dropbear keys, we do this elsewhere
 PACKAGES += dropbear
 INETD_ENABLE = y
-# Temporary use of predefined keys to save time
-DROPBEAR_KEYS = y
+DROPBEAR_KEYS = n
 
 PACKAGES += ntp
+NTP_CONF = n
 
 # Useful debugging tools
 PACKAGES += strace lsof
@@ -35,9 +36,9 @@ ncurses_TERMS = xterm xterm-color xterm-256color screen vt100 vt102
 # -----------------------------------------------------------------------------
 # Rootfs options and configuration
 
+
+
 ROOTFS_VERSION = DLS $(GIT_VERSION_SUFFIX)
-
-
 ROOT_PASSWORD = root
 
 # OPTIONS += ldconfig
@@ -45,16 +46,9 @@ ROOT_PASSWORD = root
 # LDCONFIG = cross
 
 OPTIONS += $(configdir)/skeleton
-# OPTIONS += $(configdir)/inittab
 OPTIONS += $(configdir)/upgrade
+OPTIONS += $(configdir)/network
 
 BOOT = $(configdir)/install
-
-OPTIONS += network
-NW_PORT = eth0
-NW_ADDRESS = 172.23.252.22
-NW_NETMASK = 255.255.240.0
-NW_GATEWAY = 172.23.240.254
-NW_HOSTNAME = colibri-vf50
 
 # vim: set filetype=make:

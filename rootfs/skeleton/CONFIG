@@ -1,18 +1,17 @@
 # This is used to build the extra files.
 
-# The state file system is build here
-stateroot = $(TARGET_ROOT)/state
+# Pick up the state tree definitions
+include $(configdir)/skeleton/COMMON
 
-install-state-files = \
-    sysroot=$(stateroot) fakeroot_list=/dev/null $(scripts)/install-files
+# Ensure the state directory is rebuilt from scratch.  For this to work this
+# option must come before other options that write to stateroot.
+$(stateroot):
+	rm -rf $@
+	mkdir -p $@
+.PHONY: $(stateroot)
 
-option:
-	rm -rf $(stateroot)
-	mkdir -p $(stateroot)
-	$(install-state-files) $(optiondir)/state-file-list
+option: $(stateroot)
 	$(install-files) $(optiondir)/file-list
-	cat $(optiondir)/fstab >> $(sysroot)/etc/fstab
-	cat $(optiondir)/inittab >>$(sysroot)/etc/inittab
-
+	$(install-state-files) $(optiondir)/state-file-list
 
 # vim: set filetype=make:

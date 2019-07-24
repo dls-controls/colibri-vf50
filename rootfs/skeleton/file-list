@@ -1,27 +1,15 @@
 # Extra directories and files for target
 
-
 # Mount our writeable file system here
 d 755 /opt
+d 755 /var/state
 
 # We'll send all logging to /dev/console.  This works because the system is
 # designed to be run with the serial console connected to a conserver session.
 # We may want to look at logging over ethernet instead.
 f 755 /etc/syslogd
 
-
-# Writeable files
-# d 755 /var/state
-# rd 000 /root
-# l 777 /root /var/state/root
-# l 777 /opt /var/state/opt
-
-# # Some special links for ~root/.ssh.  Surprisingly enough, it seems that
-# # dropbear doesn't mind this.
-# l 777 /root/.ssh /boot/authorized_keys
-# l 777 /root/.ssh /qspi/id_dropbear
-# l 777 /root/.ssh /qspi/id_dropbear.pub
-# l 777 /root/.ssh /qspi/known_hosts
-# 
-# # Link python into /opt
-# f 644 /usr/lib/python2.7/site-packages/defaults.pth defaults.pth
+# Modifications to installed scripts and files.
+a - /etc/inittab
+a - /etc/fstab
+a - /etc/init.d/rcS

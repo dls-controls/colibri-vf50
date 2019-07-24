@@ -1,0 +1,8 @@
+debugfs     /sys/kernel/debug   debugfs     defaults                    0   0
+
+# A tricky dance with bind mounts to get our mount points where we want them.
+# This /mnt mount is temporary while we do the bind mounts
+ubi0:state  /mnt                ubifs       defaults                    0   0
+/mnt/root   /root               none        bind                        0   0
+/mnt/opt    /opt                none        bind                        0   0
+/mnt/state  /var/state          none        bind                        0   0
