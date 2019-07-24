@@ -3,7 +3,15 @@
 # Interestingly, we are installing getent from sysroot.  This probably belongs
 # in the main rootfs build.
 
+# We also need fw_printenv from u-boot for upgrade-rootfs script
+ifndef FW_PRINTENV
+$(error Must define FW_PRINTENV)
+endif
+
 option:
+	$(install) $(FW_PRINTENV) /sbin/
+	$(install) $(optiondir)/fw_env.config /etc
+	$(install) -lf fw_printenv /sbin/fw_setenv
 	$(install) -x $(SYSROOT)/usr/bin/getent /usr/bin
 	$(install) -x $(optiondir)/upgrade-rootfs /sbin
 	$(install) $(optiondir)/upgrade.config /etc

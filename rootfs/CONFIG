@@ -28,7 +28,6 @@ PACKAGES += screen
 PACKAGES += procServ conserver
 PACKAGES += ethtool
 PACKAGES += iperf
-# PACKAGES += i2c-tools
 
 ncurses_TERMS = xterm xterm-color xterm-256color screen vt100 vt102
 
@@ -45,8 +44,8 @@ ROOT_PASSWORD = root
 # LDCONFIG = once
 # LDCONFIG = cross
 
-OPTIONS += $(configdir)/printenv
-OPTIONS += $(configdir)/inittab
+OPTIONS += $(configdir)/skeleton
+# OPTIONS += $(configdir)/inittab
 OPTIONS += $(configdir)/upgrade
 
 BOOT = $(configdir)/install

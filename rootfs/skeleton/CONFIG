@@ -1,0 +1,18 @@
+# This is used to build the extra files.
+
+# The state file system is build here
+stateroot = $(TARGET_ROOT)/state
+
+install-state-files = \
+    sysroot=$(stateroot) fakeroot_list=/dev/null $(scripts)/install-files
+
+option:
+	rm -rf $(stateroot)
+	mkdir -p $(stateroot)
+	$(install-state-files) $(optiondir)/state-file-list
+	$(install-files) $(optiondir)/file-list
+	cat $(optiondir)/fstab >> $(sysroot)/etc/fstab
+	cat $(optiondir)/inittab >>$(sysroot)/etc/inittab
+
+
+# vim: set filetype=make:

@@ -782,3 +782,12 @@ Our device tree has the following include structure:
     |   |   +-- dt-bindings/interrupt-controller/arm-gic.h
     |   +-- vf-colibri.dtsi                 General VF Colibri
     +-- dls-dps.dtsi    -- copied from vf-colibri-eval-v3.dtsi
+
+Here's an interesting curiousity.  The MTD partitioning is passed from U-boot to
+the kernel via the device tree!  In U-boot we have
+
+    mtdparts: mtdparts=vf610_nfc:128k(vf-bcb)ro,1408k(u-boot)ro,512k(u-boot-env),-(ubi)
+
+The partitions appear here:
+
+    /sys/firmware/devicetree/base/soc/aips-bus@40080000/nand@400e0000/nand@0

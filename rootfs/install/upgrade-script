@@ -7,4 +7,5 @@ ubi write $loadaddr rootfs $filesize
 
 # Restore the original boot command
 setenv bootcmd run ubiboot
+saveenv
 boot

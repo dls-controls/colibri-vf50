@@ -1,0 +1,2 @@
+# Unconditional interactive shell on serial console
+ttyLP0::askfirst:/bin/sh -l

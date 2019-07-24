@@ -1,0 +1,4 @@
+# Directories to place on writeable state filesystem
+
+d 770 /root
+d 770 /opt

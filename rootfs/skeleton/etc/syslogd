@@ -1,0 +1,2 @@
+# Send all logging to /dev/console
+SYSLOGD_OPTIONS=-O/dev/console
