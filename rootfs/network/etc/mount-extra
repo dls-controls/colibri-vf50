@@ -1,0 +1,2 @@
+# This defines the list of extra mount points
+FSTABS=/var/state/etc/fstab.extra

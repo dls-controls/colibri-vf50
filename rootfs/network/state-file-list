@@ -8,3 +8,4 @@ f 755 /state/etc/network/interfaces state/interfaces
 f 755 /state/etc/hostname state/hostname
 f 755 /state/etc/ntp.conf state/ntp.conf
 f 755 /state/etc/resolv.conf state/resolv.conf
+f 755 /state/etc/fstab.extra state/fstab.extra

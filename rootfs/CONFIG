@@ -48,6 +48,12 @@ ROOT_PASSWORD = root
 OPTIONS += $(configdir)/skeleton
 OPTIONS += $(configdir)/upgrade
 OPTIONS += $(configdir)/network
+OPTIONS += mount-extra
+
+
+final-install:
+	$(useradd) -p '' -u 37134 -g 500 epics_user
+
 
 BOOT = $(configdir)/install
 
