@@ -7,6 +7,5 @@ option:
 	$(install-files) $(optiondir)/file-list
 	$(install-state-files) $(optiondir)/state-file-list
 	$(startup) $(optiondir)/network
-	$(startup) $(optiondir)/dropbear-keys S020
 
 # vim: set filetype=make:

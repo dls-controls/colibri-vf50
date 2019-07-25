@@ -9,10 +9,9 @@ busybox_VERSION = 1.31.0
 busybox_CONFIG = $(configdir)/busybox.config
 INSTALL_UDHCPC_SCRIPT = n
 
-# Suppress first time generation of dropbear keys, we do this elsewhere
 PACKAGES += dropbear
 INETD_ENABLE = y
-DROPBEAR_KEYS = n
+DROPBEAR_KEYS := $(wildcard $(configdir)/dropbear_*_host_key)
 
 PACKAGES += ntp
 NTP_CONF = n

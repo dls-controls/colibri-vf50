@@ -2,7 +2,6 @@
 
 # Where to store dynamic network configuration
 d 755 /state/etc/network
-d 744 /state/etc/dropbear
 
 # Store network configuration definition files here
 d 755 /opt/networks

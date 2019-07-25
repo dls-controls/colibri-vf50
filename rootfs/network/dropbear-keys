@@ -1,8 +1,0 @@
-#!/bin/sh
-
-# Ensure the ssh server keys are generated.  These keys are stored permanently
-# on the state memory, so should only need to be generated on first boot.
-for t in rsa dss ecdsa; do
-    [ -e /etc/dropbear/dropbear_${t}_host_key ]  ||
-        dropbearkey -t ${t} -f /etc/dropbear/dropbear_${t}_host_key
-done

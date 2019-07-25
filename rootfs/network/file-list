@@ -11,10 +11,6 @@ l - /etc/resolv.conf            /var/state/etc/resolv.conf
 l - /etc/ntp.conf               /var/state/etc/ntp.conf
 l - /etc/network/interfaces     /var/state/etc/network/interfaces
 
-# Link dropbear configuration instead of created directory
-rd - /etc/dropbear
-l - /etc/dropbear /var/state/etc/dropbear
-
 # Mounting points for mount-extra
 d 755 /dls_sw
 d 777 /dls_sw/work
