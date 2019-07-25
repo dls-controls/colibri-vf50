@@ -174,6 +174,7 @@ if $WRITE_STATE; then
         /etc/init.d/mount-extra start
         /etc/init.d/network start
     fi
+    sync
 else
     for f in $TEMPDIR/*; do
         echo -- $(basename $f) -------------------------------------------------

@@ -51,13 +51,10 @@ $(O)/%-script: $(bootdir)/%-script
 	mkimage -T script -d $< $@
 
 
-# Construct UBIFS from the file image
-$(O)/rootfs.img: $(O)/imagefile.cpio
+# Construct UBIFS from the file images
+$(O)/%.img: $(TARGET_ROOT)/%
 	fakeroot -i $(TARGET_ROOT)/fakeroot.env \
-            mkfs.ubifs $(MKFS_UBIFS_OPTS) -o $@ -r $(TARGET_ROOT)/rootfs
-
-$(O)/state.img: $(stateroot)
-	mkfs.ubifs $(MKFS_UBIFS_OPTS) -o $@ -r $<
+            mkfs.ubifs $(MKFS_UBIFS_OPTS) -o $@ -r $<
 
 
 # This dependency statement is needed to ensure that all the $(O) files are
