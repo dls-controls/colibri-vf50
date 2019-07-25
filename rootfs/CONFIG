@@ -36,8 +36,6 @@ ncurses_TERMS = xterm xterm-color xterm-256color screen vt100 vt102
 # -----------------------------------------------------------------------------
 # Rootfs options and configuration
 
-
-
 ROOTFS_VERSION = DLS $(GIT_VERSION_SUFFIX)
 ROOT_PASSWORD = root
 
@@ -55,6 +53,7 @@ final-install:
 	$(useradd) -p '' -u 37134 -g 500 epics_user
 
 
+# This assembles all the script and file system images
 BOOT = $(configdir)/install
 
 # vim: set filetype=make:

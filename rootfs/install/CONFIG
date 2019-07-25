@@ -24,11 +24,11 @@ BOOT_SCRIPTS += initramfs-script
 BOOT_SCRIPTS += install-script
 BOOT_SCRIPTS += upgrade-script
 
-$(O)/initramfs-script: $(O)/imagefile.cpio.gz
-$(O)/install-script: $(O)/rootfs.img
-$(O)/upgrade-script: $(O)/rootfs.img
+BOOT_DEPENDS += $(BOOT_SCRIPTS:%=$(O)/%.image)
+BOOT_DEPENDS += $(O)/rootfs.img
+BOOT_DEPENDS += $(O)/state.img
+BOOT_DEPENDS += $(O)/imagefile.cpio.gz
 
-$(O)/%: $(O)
 
 # These options are lifted from
 #   https://developer.toradex.com/knowledge-base/u-boot-flashing-methods
@@ -50,6 +50,7 @@ $(O)/%-script: $(bootdir)/%-script
 %.image: %
 	mkimage -T script -d $< $@
 
+
 # Construct UBIFS from the file image
 $(O)/rootfs.img: $(O)/imagefile.cpio
 	fakeroot -i $(TARGET_ROOT)/fakeroot.env \
@@ -58,6 +59,11 @@ $(O)/rootfs.img: $(O)/imagefile.cpio
 $(O)/state.img: $(stateroot)
 	mkfs.ubifs $(MKFS_UBIFS_OPTS) -o $@ -r $<
 
-boot: $(BOOT_SCRIPTS:%=$(O)/%.image) $(O)/state.img
+
+# This dependency statement is needed to ensure that all the $(O) files are
+# built *after* $(O) has been cleaned.
+$(BOOT_DEPENDS): $(O)/imagefile.cpio
+
+boot: $(BOOT_DEPENDS)
 
 # vim: set filetype=make:

@@ -1,0 +1,182 @@
+#!/bin/sh
+
+# Configuration tool for reconfiguring network settings.
+
+NETWORK_BASE=/opt/networks
+ETC=/var/state/etc
+
+
+error()
+{
+    echo >&2 "$@"
+    exit 1
+}
+
+
+# Reads the specified network section for the currently configured network.
+read_network_section()
+{
+    # Tricksy sed script to skip to the named section and then emit everything
+    # up to the next section.
+    sed -n '/^\['$1']/{
+        :l n                # Move onto the next line and loop here
+            /^\[/q          # Stop as soon as start of next section detected
+            /^#/d; /^$/d    # Delete comment and empty lines
+            p               # Print this line
+            b l             # and go round again
+        }' "$NETWORK_CONFIG"
+}
+
+# Returns value associated with given key in $network_config
+read_network_key()
+{
+    echo "$network_config" |
+    sed -n '/^'$1'  */{s///; p; q}'
+}
+
+
+
+# ------------------------------------------------------------------------------
+# Keywork arguments
+
+WRITE_STATE=false
+RESTART_NETWORK=false
+
+while getopts 'wrh' option; do
+    case "$option" in
+        w)  WRITE_STATE=true ;;
+        r)  RESTART_NETWORK=true ;;
+        h)  cat <<EOF
+Usage: $(basename $0) network new-host-name [new-ip-address]
+
+Reconfigure network settings.  The network and new-host-name must be specified.
+If new-ip-address is not specified then new-host-name will be used to look up
+the address in the network configuration file.
+
+    -w  Update network configuration.  If not specified then the new network
+        configuration files are shown but not updated.
+    -r  Restart network after reconfiguration.
+EOF
+            exit 0 ;;
+        *)  error 'Invalid option.  Try -h for help.' ;;
+    esac
+done
+shift $((OPTIND-1))
+
+
+# ------------------------------------------------------------------------------
+# Positional arguments.
+
+# Check for the right number of arguments, we expect 2 or 3.
+[ $# = 2 -o $# = 3 ]  ||
+    error 'Wrong number of arguments.  Try -h for help.'
+
+# Pick up the network definition, check it exists.
+NET="$1"
+NETWORK_CONFIG="$NETWORK_BASE/network-$NET.config"
+[ -r "$NETWORK_CONFIG" ]  ||
+    error "No network definition for $NET network"
+
+# Pick up hostname and ip address
+hostname="$2"
+if [ $# = 3 ]; then
+    ipaddress="$3"
+else
+    # Look for hostname in the valid-ips section
+    ipaddress="$(
+        read_network_section valid-ips |
+        sed -n '/^'$hostname'  */{s///; p; q}')"
+    [ -n "$ipaddress" ]  ||
+        error "Hostname '$hostname' not known for network $NET"
+fi
+
+
+# ------------------------------------------------------------------------------
+# Validate proposed network configuration
+
+# Start by picking up the network definition section.  We'll need to do some
+# computations on this.
+network_config="$(read_network_section network)"  ||
+    error "Unable to read network definitions for $NET network"
+
+network="$(read_network_key network)"
+netmask="$(read_network_key netmask)"
+gateway="$(read_network_key gateway)"
+
+# Compute the network and broacast addresses corresponding to the given
+# ipaddress and netmask we're given.  This is assigned to NETWORK and BROADCAST
+ipcalc="$(ipcalc -nb "$ipaddress" "$netmask")"  &&
+eval "$ipcalc"  ||
+    error "Problem processing IP address '$ipaddress'"
+# Check that the ip address is in the right network.
+[ $NETWORK = $network ]  ||
+    error "IP address '$ipaddress' is not in network $NET:$network"
+
+
+# ------------------------------------------------------------------------------
+# Compute new network configuration as a set of files
+
+TEMPDIR=$(mktemp -d)
+trap 'rm -rf $TEMPDIR' EXIT
+
+# fstab.extra
+read_network_section fstab >$TEMPDIR/fstab.extra
+
+# ntp.conf
+{
+    read_network_section ntp
+    cat <<EOF
+driftfile /tmp/ntp.drift
+pidfile /var/run/ntpd.pid
+logconfig -syncevents -sysevents
+EOF
+} >$TEMPDIR/ntp.conf
+
+# hostname
+echo $hostname >$TEMPDIR/hostname
+
+# resolv.conf
+read_network_section resolv >$TEMPDIR/resolv.conf
+
+# interfaces
+{
+    cat <<EOF
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+    address $ipaddress
+    network $network
+    netmask $netmask
+    broadcast $BROADCAST
+EOF
+    [ -n "$gateway" ]  &&  echo "    gateway $gateway"
+} >$TEMPDIR/interfaces
+
+
+# ------------------------------------------------------------------------------
+# Display or commit
+
+if $WRITE_STATE; then
+    if $RESTART_NETWORK; then
+        /etc/init.d/mount-extra stop
+        /etc/init.d/network stop
+    fi
+
+    install $TEMPDIR/hostname $ETC/
+    install $TEMPDIR/resolv.conf $ETC/
+    install $TEMPDIR/ntp.conf $ETC/
+    install $TEMPDIR/fstab.extra $ETC/
+    install $TEMPDIR/interfaces $ETC/network/
+
+    if $RESTART_NETWORK; then
+        /etc/init.d/mount-extra start
+        /etc/init.d/network start
+    fi
+else
+    for f in $TEMPDIR/*; do
+        echo -- $(basename $f) -------------------------------------------------
+        cat $f
+    done
+fi

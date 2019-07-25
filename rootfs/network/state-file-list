@@ -1,11 +1,10 @@
 # Skeleton required for saved network configuration
 
+# Where to store dynamic network configuration
 d 755 /state/etc/network
 d 744 /state/etc/dropbear
 
-# Initial state for use on development network
-f 755 /state/etc/network/interfaces state/interfaces
-f 755 /state/etc/hostname state/hostname
-f 755 /state/etc/ntp.conf state/ntp.conf
-f 755 /state/etc/resolv.conf state/resolv.conf
-f 755 /state/etc/fstab.extra state/fstab.extra
+# Store network configuration definition files here
+d 755 /opt/networks
+f 755 /opt/networks/network-dev.config network-dev.config
+f 755 /opt/networks/network-pri.config network-pri.config

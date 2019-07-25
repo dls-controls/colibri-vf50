@@ -1,2 +1,0 @@
-172.23.100.71:/exports/dls_sw/work  /dls_sw/work   nfs nolock,intr
-172.23.100.71:/exports/dls_sw/prod  /dls_sw/prod   nfs nolock,ro,intr
