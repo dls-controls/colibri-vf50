@@ -6,7 +6,7 @@ NETWORK_BASE=/opt/networks
 ETC=/var/state/etc
 
 
-error()
+Error()
 {
     echo >&2 "$@"
     exit 1
@@ -18,7 +18,7 @@ read_network_section()
 {
     # Tricksy sed script to skip to the named section and then emit everything
     # up to the next section.
-    sed -n '/^\['$1']/{
+    sed -n '/^\['$2']/{     # Find start of named section
         :l n                # Move onto the next line and loop here
             /^\[/q          # Stop as soon as start of next section detected
             /^#/d; /^$/d    # Delete comment and empty lines
@@ -37,7 +37,7 @@ read_network_key()
 
 
 # ------------------------------------------------------------------------------
-# Keywork arguments
+# Optional arguments
 
 WRITE_STATE=false
 RESTART_NETWORK=false
@@ -58,7 +58,7 @@ the address in the network configuration file.
     -r  Restart network after reconfiguration.
 EOF
             exit 0 ;;
-        *)  error 'Invalid option.  Try -h for help.' ;;
+        *)  Error 'Invalid option.  Try -h for help.' ;;
     esac
 done
 shift $((OPTIND-1))
@@ -69,13 +69,13 @@ shift $((OPTIND-1))
 
 # Check for the right number of arguments, we expect 2 or 3.
 [ $# = 2 -o $# = 3 ]  ||
-    error 'Wrong number of arguments.  Try -h for help.'
+    Error 'Wrong number of arguments.  Try -h for help.'
 
 # Pick up the network definition, check it exists.
 NET="$1"
 NETWORK_CONFIG="$NETWORK_BASE/network-$NET.config"
 [ -r "$NETWORK_CONFIG" ]  ||
-    error "No network definition for $NET network"
+    Error "No network definition for $NET network"
 
 # Pick up hostname and ip address
 hostname="$2"
@@ -87,7 +87,7 @@ else
         read_network_section valid-ips |
         sed -n '/^'$hostname'  */{s///; p; q}')"
     [ -n "$ipaddress" ]  ||
-        error "Hostname '$hostname' not known for network $NET"
+        Error "Hostname '$hostname' not known for network $NET"
 fi
 
 
@@ -97,7 +97,7 @@ fi
 # Start by picking up the network definition section.  We'll need to do some
 # computations on this.
 network_config="$(read_network_section network)"  ||
-    error "Unable to read network definitions for $NET network"
+    Error "Unable to read network definitions for $NET network"
 
 network="$(read_network_key network)"
 netmask="$(read_network_key netmask)"
@@ -107,10 +107,10 @@ gateway="$(read_network_key gateway)"
 # ipaddress and netmask we're given.  This is assigned to NETWORK and BROADCAST
 ipcalc="$(ipcalc -nb "$ipaddress" "$netmask")"  &&
 eval "$ipcalc"  ||
-    error "Problem processing IP address '$ipaddress'"
+    Error "Problem processing IP address '$ipaddress'"
 # Check that the ip address is in the right network.
 [ $NETWORK = $network ]  ||
-    error "IP address '$ipaddress' is not in network $NET:$network"
+    Error "IP address '$ipaddress' is not in network $NET:$network"
 
 
 # ------------------------------------------------------------------------------
