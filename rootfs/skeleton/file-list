@@ -1,13 +1,15 @@
 # Extra directories and files for target
 
-# Mount our writeable file system here
+# Mount our writeable file system here with the following mappings:
+#   state:/opt => root:/opt, state:/root => root:/root,
+#   state:/state => root:/var/state
 d 755 /opt
 d 755 /var/state
 
 # We'll send all logging to /dev/console.  This works because the system is
 # designed to be run with the serial console connected to a conserver session.
 # We may want to look at logging over ethernet instead.
-f 755 /etc/syslogd
+f 644 /etc/syslogd
 
 # Modifications to installed scripts and files.
 a - /etc/inittab

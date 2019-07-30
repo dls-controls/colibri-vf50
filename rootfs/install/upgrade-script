@@ -1,9 +1,26 @@
 # Script for upgrading rootfs from u-boot.
 
 echo Upgrading from $serverip:$server_prefix
-tftpboot $loadaddr ${server_prefix}rootfs.img  &&
-ubi part ubi  &&
+
+ubi part ubi
+
+# Just like installation, we upgrade all partitions ... except for the state
+# partition, which we optionally leave alone
+
+# Kernel
+tftpboot $loadaddr ${server_prefix}zImage
+ubi write $loadaddr kernel $filesize
+# Device tree
+tftpboot $loadaddr ${server_prefix}device-tree.dtp
+ubi write $loadaddr dtb $filesize
+# Rootfs
+tftpboot $loadaddr ${server_prefix}rootfs.img
 ubi write $loadaddr rootfs $filesize
+# Writeable persistent state
+if test $write_state = 1; then
+    tftpboot $loadaddr ${server_prefix}state.img
+    ubi write $loadaddr state $filesize
+fi
 
 # Restore the original boot command
 setenv bootcmd run ubiboot

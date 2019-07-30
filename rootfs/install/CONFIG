@@ -15,10 +15,8 @@
 # script needs a number of u-boot environment variables to be set, as managed by
 # the tftp-upgrade script.
 
-
 # Pick up the state tree definitions
 include $(configdir)/skeleton/COMMON
-
 
 BOOT_SCRIPTS += initramfs-script
 BOOT_SCRIPTS += install-script

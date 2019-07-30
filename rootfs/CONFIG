@@ -3,7 +3,6 @@
 # -----------------------------------------------------------------------------
 # Package definitions for Cortex Vybrid
 
-
 PACKAGES += busybox
 busybox_VERSION = 1.31.0
 busybox_CONFIG = $(configdir)/busybox.config

@@ -18,6 +18,8 @@ DEFAULT_TARGETS += boot
 # The following symbols are not given defaults but must be specified in the
 # CONFIG file.
 REQUIRED_SYMBOLS += ROOTFS_TOP
+REQUIRED_SYMBOLS += UPGRADE_PREFIX
+REQUIRED_SYMBOLS += UPGRADE_ROOT
 
 TAR_FILES += /dls_sw/prod/targetOS/tar-files
 TAR_FILES += /dls_sw/work/targetOS/tar-files
@@ -84,7 +86,7 @@ MD5_SUM_mtd-utils-2.1.0 = 91e399e2f698caff01e9b0f4ca1b59cc
 # need to be defined.
 define _CHECK_SYMBOL
     ifndef $1
-        $$(error Must define symbol $1 in CONFIG)
+        $1 = $$(error Must define symbol $1 in CONFIG)
     endif
 endef
 CHECK_SYMBOL = $(eval $(_CHECK_SYMBOL))
@@ -190,8 +192,7 @@ $(FW_PRINTENV): $(U_BOOT_SRC)
 
 
 u-boot: $(U_BOOT_IMAGE)
-u-boot-src: $(U_BOOT_SRC)
-.PHONY: u-boot u-boot-src
+.PHONY: u-boot
 
 
 # ------------------------------------------------------------------------------
@@ -281,28 +282,29 @@ mtd-utils: $(MKFS_UBIFS)
 
 ROOTFS_O = $(BUILD_TOP)/targets/rootfs
 
-# Command for building rootfs.  Need to specify both action and target name.
-MAKE_ROOTFS = \
-    $(call EXPORT,TOOLCHAIN FW_PRINTENV) $(ROOTFS_TOP)/rootfs \
-        -f '$(TAR_FILES)' -r $(BUILD_TOP) -t $(CURDIR)/rootfs
-
-
 # To handle make's requirement to have a single build target, we depend on the
 # rootfs image directory.  This is rebuilt each time and contains all the target
 # files we will want.
 ROOTFS_IMAGE = $(ROOTFS_O)/image
 
-# We have a dependency on u-boot so that the mkimage command is available
-$(ROOTFS_IMAGE): $(shell find rootfs -type f) $(U_BOOT_IMAGE) $(FW_PRINTENV)
-	$(call MAKE_ROOTFS) make
-
-
+# All these files are generated when we build the rootfs.
 ROOTFS_FILES += $(ROOTFS_IMAGE)/imagefile.cpio.gz
 ROOTFS_FILES += $(ROOTFS_IMAGE)/rootfs.img
 ROOTFS_FILES += $(ROOTFS_IMAGE)/state.img
 ROOTFS_FILES += $(ROOTFS_IMAGE)/initramfs-script.image
 ROOTFS_FILES += $(ROOTFS_IMAGE)/install-script.image
 ROOTFS_FILES += $(ROOTFS_IMAGE)/upgrade-script.image
+
+
+# Command for building rootfs.  Need to specify both action and target name.
+MAKE_ROOTFS = \
+    $(call EXPORT,TOOLCHAIN FW_PRINTENV) $(ROOTFS_TOP)/rootfs \
+        -f '$(TAR_FILES)' -r $(BUILD_TOP) -t $(CURDIR)/rootfs
+
+
+# We have a dependency on u-boot so that the mkimage command is available
+$(ROOTFS_IMAGE): $(shell find rootfs -type f) $(U_BOOT_IMAGE) $(FW_PRINTENV)
+	$(call MAKE_ROOTFS) make
 
 $(ROOTFS_FILES): $(ROOTFS_IMAGE)
 
@@ -326,6 +328,8 @@ busybox-keep: $(ROOTFS_O)/build/busybox
 # ------------------------------------------------------------------------------
 # Boot image
 #
+# Gathers together all the files needed to boot, install, or upgrade the target
+# system.
 
 BOOT_FILES += $(U_BOOT_IMAGE)
 BOOT_FILES += $(ZIMAGE)
@@ -337,3 +341,18 @@ boot: $(BOOT_FILES)
 	mkdir -p $(BOOT_ROOT)
 	cp $^ $(BOOT_ROOT)
 .PHONY: boot
+
+
+# The upgrade target installs the files necessary for upgrading in the TFTP
+# server.
+UPGRADE_FILES += upgrade-script.image
+UPGRADE_FILES += zImage
+UPGRADE_FILES += device-tree.dtb
+UPGRADE_FILES += rootfs.img
+UPGRADE_FILES += state.img
+
+upgrade: $(BOOT_FILES)
+	for f in $(UPGRADE_FILES); do \
+            cp $(BOOT_ROOT)/$$f $(UPGRADE_ROOT)$(UPGRADE_PREFIX)$$f; \
+        done
+.PHONY: upgrade

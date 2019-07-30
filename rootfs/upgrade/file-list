@@ -1,0 +1,7 @@
+# Settings for fw_setenv
+l - /sbin/fw_setenv fw_printenv
+f 644 /etc/fw_env.config /fw_env.config
+
+# upgrade-rootfs script
+f 755 /sbin/upgrade-rootfs /upgrade-rootfs
+l - /etc/upgrade.config /var/state/etc/upgrade.config

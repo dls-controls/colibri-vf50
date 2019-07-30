@@ -1,6 +1,12 @@
-BUILD_TOP = /scratch/mga83/tmp/colibri-vf50
+# Localisation definitions for building Colibri VF50 rootfs
 
+# Location of DLS rootfs
 ROOTFS_TOP = /home/mga83/targetOS/rootfs
 
+# Where to do the build.  Needs around 2GB free space!
+BUILD_TOP = /scratch/mga83/tmp/colibri-vf50
+
+UPGRADE_PREFIX = /colibri-vf50/devel-
+UPGRADE_ROOT = /dls_sw/work/tftpboot/dev/
 
 # vim: set filetype=make:

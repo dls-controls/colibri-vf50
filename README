@@ -801,3 +801,25 @@ Major loose ends:
 
 1.  Mount points for /dls_sw/prod, /dls_sw/work
 2.  configure-network tool
+
+
+30/7/19
+
+One worrying loose end.  Occasionally during reboot the network won't come up
+properly.  Here is the tail of a kernel boot log for a successful boot:
+
+
+ul 30 10:25:24 (none) user.info kernel: [    3.741208] fec 400d1000.ethernet eth0: Freescale FEC PHY driver [Micrel KSZ8041] (mii_bus:phy_addr=400d1000.ethernet-1:00, irq=-1)
+Jul 30 10:25:24 (none) user.info kernel: [    3.753697] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
+Jul 30 10:25:24 (none) user.notice rc: Starting networking:  ok.
+Jul 30 10:25:24 (none) user.notice rc: Starting inetd:  ok.
+Jul 30 10:25:26 (none) user.info kernel: [    5.741694] fec 400d1000.ethernet eth0: Link is Up - 100Mbps/Full - flow control rx/tx
+Jul 30 10:25:26 (none) user.info kernel: [    5.749723] IPv6: ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
+Jul 30 10:25:26 (none) user.notice rc: Starting local mounts:  ok.
+Jul 30 10:25:33 (none) user.notice rc: Starting ntpd: 30 Jul 10:25:33 ntpdate[117]: step time server 172.23.240.2 offset 0.760364 sec
+Jul 30 10:25:34 (none) daemon.notice ntpd[118]: ntpd 4.2.8p2@1.3265 Wed  3 Jul 10:31:25 UTC 2019 (1): Starting
+Jul 30 10:25:34 (none) daemon.info ntpd[118]: Command line: /usr/sbin/ntpd -g
+Jul 30 10:25:34 (none) user.notice rc:  ok.
+
+
+Difficult to get a failing boot, as it's quite rare.

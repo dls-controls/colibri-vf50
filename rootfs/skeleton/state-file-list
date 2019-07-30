@@ -1,6 +1,12 @@
-# Directories to place on writeable state filesystem
+# Directories to place on writeable state filesystem.  The /root and /opt
+# directories are mounted separately (using -o bind) as /root and /opt, and
+# /state is mounted as /var/state.  A number of files in /etc are linked to
+# writeable versions in /var/state/etc.
 d 750 /root
 d 700 /root/.ssh
 d 755 /opt
 d 755 /state
 d 755 /state/etc
+
+# Install a profile for root
+f 644 /root/.profile

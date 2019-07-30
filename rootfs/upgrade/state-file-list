@@ -1,0 +1,2 @@
+# Put the upgrade config file in the writeable state
+f 644 /state/etc/upgrade.config /upgrade.config

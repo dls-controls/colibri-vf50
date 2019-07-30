@@ -1,19 +1,32 @@
 # Support for upgrading installed system.
 
-# Interestingly, we are installing getent from sysroot.  This probably belongs
-# in the main rootfs build.
-
 # We also need fw_printenv from u-boot for upgrade-rootfs script
 ifndef FW_PRINTENV
 $(error Must define FW_PRINTENV)
 endif
 
+# Pick up the state tree definitions
+include $(configdir)/skeleton/COMMON
+
+
+# We need a number of tools to support upgrading:
+#   fw_printenv, fw_setenv
+#       Provided as part of U-boot, needed by upgrade process to update U-boot
+#       environment for upgrade on reboot.
+#   fw_env.config
+#       Needed by fw_printenv and fw_setenv to locate U-boot environment.
+#   getent
+#       Used by upgrade-rootfs to convert server name to IP address, provided
+#       as part of the toolchain system root.  This should probably be installed
+#       as part of the overall rootfs installation.
+#   upgrade-rootfs
+#       This script is used to trigger an upgrade.
+#   upgrade.config
+#       This is used to define defaults for the upgrade process.
 option:
 	$(install) $(FW_PRINTENV) /sbin/
-	$(install) $(optiondir)/fw_env.config /etc
-	$(install) -lf fw_printenv /sbin/fw_setenv
 	$(install) -x $(SYSROOT)/usr/bin/getent /usr/bin
-	$(install) -x $(optiondir)/upgrade-rootfs /sbin
-	$(install) $(optiondir)/upgrade.config /etc
+	$(install-files) $(optiondir)/file-list
+	$(install-state-files) $(optiondir)/state-file-list
 
 # vim: set filetype=make:
