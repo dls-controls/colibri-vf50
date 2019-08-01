@@ -715,7 +715,7 @@ J3  Fn          SOC         GPIO
 86  SPI1 CS     PTD5        P2[20]  84      Already configured
 88  SPI1 CLK    PTD8        P2[23]  87      /
 90  SPI1 RXD    PTD6        P2[21]  85      /
-92  SPI1 TXT    PTD7        P2[22]  86      /
+92  SPI1 TXD    PTD7        P2[22]  86      /
 98  A INIT B    PTC1        P1[14]  46
 100 A DONE      PTD13       P2[28]  92
 102 A PROG B    PTA12       P0[5]   5
@@ -823,3 +823,18 @@ Jul 30 10:25:34 (none) user.notice rc:  ok.
 
 
 Difficult to get a failing boot, as it's quite rare.
+
+1/8/19
+
+Looks as if multi-byte transactions over SPI are pretty easy, but there are two
+troubling issues outstanding:
+
+1.  I'm currently unable to configure CS3 for SPI0.  This is covered by this
+    open question to Toradex:
+
+    https://www.toradex.com/community/questions/40060/configuring-chip-select-for-spi.html
+
+2.  The SPI clock is behaving strangely, with very short setup times at the
+    start of packets, question asked here:
+
+    https://www.toradex.com/community/questions/40076/correctly-configuring-spi.html
