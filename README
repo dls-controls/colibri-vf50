@@ -697,6 +697,7 @@ J3  Fn          SOC         GPIO
 71  SPI0 CS     PTC0        P1[13]  45      This is SPI0_PCS3
 73  SPI0 TXD    PTB21       P1[11]  43
 77  SPI0 CLK    PTB22       P1[12]  44
+43  SPI0 RXD    PTB20       P1[10]  42
 89  SPARE 3     PTA9        P0[2]   2
 93  SPARE 4     PTB28       P3[2]   98
 95  SPARE 5     PTC30       P3[7]   103
