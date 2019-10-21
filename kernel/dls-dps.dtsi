@@ -109,7 +109,7 @@
                 VF610_PAD_PTD31__GPIO_63    0x00c2      // ADC CLK
                 /* Digital Interface FPGA programming. */
                 VF610_PAD_PTA17__GPIO_7     0x0001      // INIT B
-                VF610_PAD_PTE13__GPIO_118   0x0001      // DONE
+                VF610_PAD_PTE21__GPIO_126   0x0001      // DONE
                 VF610_PAD_PTE22__GPIO_127   0x00ce      // PROG B
                 VF610_PAD_PTE13__GPIO_118   0x00c2      // DSO
                 VF610_PAD_PTE14__GPIO_119   0x00c2      // CLK
