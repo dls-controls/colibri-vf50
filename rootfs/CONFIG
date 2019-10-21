@@ -44,16 +44,16 @@ ROOT_PASSWORD = root
 OPTIONS += $(configdir)/skeleton
 OPTIONS += $(configdir)/upgrade
 OPTIONS += $(configdir)/network
-
-# Add optional extra mount points
-MOUNT_EXTRA_AUTO = -
 OPTIONS += mount-extra
+
+STARTUP_LIST = $(configdir)/startup_list
 
 
 final-install:
 	$(groupadd) -g 500 dcs
 	$(useradd) -p '' -u 37134 -g 500 epics_user
 	cat $(configdir)/mdev.conf >>$(sysroot)/etc/mdev.conf
+	$(startup) $(configdir)/opt-etc
 
 
 # This assembles all the script and file system images

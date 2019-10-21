@@ -6,5 +6,8 @@ d 750 /root
 d 700 /root/.ssh
 d 755 /opt
 d 755 /opt/bin
+d 755 /opt/etc
+d 755 /opt/etc/rc.d
+d 755 /opt/etc/init.d
 d 755 /state
 d 755 /state/etc
