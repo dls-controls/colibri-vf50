@@ -171,7 +171,6 @@ if $WRITE_STATE; then
     install $TEMPDIR/interfaces $ETC/network/
 
     if $RESTART_NETWORK; then
-        /etc/init.d/mount-extra start
         /etc/init.d/network start
     fi
     sync
