@@ -5,8 +5,6 @@
 d 750 /root
 d 700 /root/.ssh
 d 755 /opt
+d 755 /opt/bin
 d 755 /state
 d 755 /state/etc
-
-# Install a profile for root
-f 644 /root/.profile

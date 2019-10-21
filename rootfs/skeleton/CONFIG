@@ -13,5 +13,7 @@ $(stateroot):
 option: $(stateroot)
 	$(install-files) $(optiondir)/file-list
 	$(install-state-files) $(optiondir)/state-file-list
+	echo 'export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/opt/bin' \
+            >>$(sysroot)/etc/profile
 
 # vim: set filetype=make:
