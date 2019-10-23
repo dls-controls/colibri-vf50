@@ -18,7 +18,7 @@ read_network_section()
 {
     # Tricksy sed script to skip to the named section and then emit everything
     # up to the next section.
-    sed -n '/^\['$2']/{     # Find start of named section
+    sed -n '/^\['$1']/{     # Find start of named section
         :l n                # Move onto the next line and loop here
             /^\[/q          # Stop as soon as start of next section detected
             /^#/d; /^$/d    # Delete comment and empty lines
@@ -37,25 +37,60 @@ read_network_key()
 
 
 # ------------------------------------------------------------------------------
+# Special treatment of -l option
+
+get_network_config()
+{
+    NET="$1"
+    NETWORK_CONFIG="$NETWORK_BASE/network-$NET.config"
+    [ -r "$NETWORK_CONFIG" ]  ||
+        Error "No network definition for $NET network"
+}
+
+
+show_network_lists()
+{
+    case $# in
+        0)  # List networks available
+            echo /opt/networks/network-*.config |
+            tr ' ' '\n' |
+            sed 's:^/opt/networks/network-::; s/\.config$//'
+            ;;
+        1)  # List valid IPs available
+            get_network_config "$1"
+            read_network_section valid-ips
+            ;;
+        *)  Error 'Wrong number of arguments' ;;
+    esac
+}
+
+# ------------------------------------------------------------------------------
 # Optional arguments
 
 WRITE_STATE=false
 RESTART_NETWORK=false
+SHOW_IP_LIST=false
 
-while getopts 'wrh' option; do
+while getopts 'wrlh' option; do
     case "$option" in
         w)  WRITE_STATE=true ;;
         r)  RESTART_NETWORK=true ;;
+        l)  SHOW_IP_LIST=true ;;
         h)  cat <<EOF
-Usage: $(basename $0) network new-host-name [new-ip-address]
+Usage: $(basename $0) [options] network new-host-name [new-ip-address]
 
 Reconfigure network settings.  The network and new-host-name must be specified.
 If new-ip-address is not specified then new-host-name will be used to look up
 the address in the network configuration file.
 
+The following options can be specified:
     -w  Update network configuration.  If not specified then the new network
         configuration files are shown but not updated.
     -r  Restart network after reconfiguration.
+    -l  List available host names and addresses; in this case the new-host-name
+        argument should be omitted, and the options are:
+        -l              Lists the networks available
+        -l network      Lists hostnames and ip addresses available on network.
 EOF
             exit 0 ;;
         *)  Error 'Invalid option.  Try -h for help.' ;;
@@ -63,6 +98,14 @@ EOF
 done
 shift $((OPTIND-1))
 
+
+# Special treatment of -l option
+if $SHOW_IP_LIST; then
+    ! $WRITE_STATE  &&  ! $RESTART_NETWORK  ||
+        Error 'Cannot combine -l with other options'
+    show_network_lists "$@"
+    exit 0
+fi
 
 # ------------------------------------------------------------------------------
 # Positional arguments.
@@ -72,10 +115,7 @@ shift $((OPTIND-1))
     Error 'Wrong number of arguments.  Try -h for help.'
 
 # Pick up the network definition, check it exists.
-NET="$1"
-NETWORK_CONFIG="$NETWORK_BASE/network-$NET.config"
-[ -r "$NETWORK_CONFIG" ]  ||
-    Error "No network definition for $NET network"
+get_network_config "$1"
 
 # Pick up hostname and ip address
 hostname="$2"
