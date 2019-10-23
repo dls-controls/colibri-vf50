@@ -9,5 +9,7 @@ d 755 /opt/bin
 d 755 /opt/etc
 d 755 /opt/etc/rc.d
 d 755 /opt/etc/init.d
+l -   /opt/state /var/state/opt
 d 755 /state
 d 755 /state/etc
+d 755 /state/opt
