@@ -28,13 +28,7 @@ TAR_FILES += /dls_sw/work/targetOS/tar-files
 include CONFIG
 include $(TOOLCHAIN)
 
-export GIT_VERSION_SUFFIX = \
-    $(shell git describe --abbrev=7 --dirty --always --tags)
-
-export CROSS_COMPILE = $(COMPILER_PREFIX)-
-
 ARCH = arm
-export PATH := $(BINUTILS_DIR)/bin:$(TOOLKIT_ROOT)/bin:$(PATH)
 
 # (we'll revisit this)
 # Both kernel and u-boot builds need CROSS_COMPILE and ARCH to be exported
@@ -46,6 +40,10 @@ SRC_ROOT = $(BUILD_TOP)/src
 TOOLKIT_ROOT = $(BUILD_TOP)/toolkit
 BOOT_ROOT = $(BUILD_TOP)/boot
 
+export GIT_VERSION_SUFFIX = \
+    $(shell git describe --abbrev=7 --dirty --always --tags)
+export CROSS_COMPILE = $(COMPILER_PREFIX)-
+export PATH := $(BINUTILS_DIR)/bin:$(TOOLKIT_ROOT)/bin:$(PATH)
 
 
 # ------------------------------------------------------------------------------
@@ -301,9 +299,13 @@ MAKE_ROOTFS = \
     $(call EXPORT,TOOLCHAIN FW_PRINTENV) $(ROOTFS_TOP)/rootfs \
         -f '$(TAR_FILES)' -r $(BUILD_TOP) -t $(CURDIR)/rootfs
 
+ROOTFS_IMAGE_DEPENDS += $(MKFS_UBIFS)
+ROOTFS_IMAGE_DEPENDS += $(U_BOOT_IMAGE)
+ROOTFS_IMAGE_DEPENDS += $(FW_PRINTENV)
+ROOTFS_IMAGE_DEPENDS += $(shell find rootfs -type f)
 
 # We have a dependency on u-boot so that the mkimage command is available
-$(ROOTFS_IMAGE): $(shell find rootfs -type f) $(U_BOOT_IMAGE) $(FW_PRINTENV)
+$(ROOTFS_IMAGE): $(ROOTFS_IMAGE_DEPENDS)
 	$(call MAKE_ROOTFS) make
 
 $(ROOTFS_FILES): $(ROOTFS_IMAGE)

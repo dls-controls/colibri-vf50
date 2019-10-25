@@ -41,23 +41,25 @@ MKFS_UBIFS_OPTS = --space-fixup -c 8112 -e 124KiB -m 2048
 # with trailing backslashes (deleting all leading whitespace on the next line).
 SED_COMMANDS = /^\#/d; /^$$/d;
 SED_COMMANDS += :x /\\$$/{N; s/\\\n *//; bx};
-$(O)/%-script: $(bootdir)/%-script
+$(O)/%-script: $(bootdir)/%-script $(O)/imagefile.cpio
 	sed '$(SED_COMMANDS)' $< >$@
 
 # Wrap up u-boot scripts so u-boot can source them.
-%.image: %
+%.image: % $(O)/imagefile.cpio
 	mkimage -T script -d $< $@
 
+
+# Make needs to know that rootfs and state are built by the same process that
+# builds imagefile.cpio.  Although in truth rootfs comes first, the structure of
+# ROOTFS_MAKE hides this, so the following dependencies are needed to ensure
+# that the two .img files are actually built.
+$(TARGET_ROOT)/rootfs: $(O)/imagefile.cpio
+$(TARGET_ROOT)/state: $(O)/imagefile.cpio
 
 # Construct UBIFS from the file images
 $(O)/%.img: $(TARGET_ROOT)/%
 	fakeroot -i $(TARGET_ROOT)/fakeroot.env \
             mkfs.ubifs $(MKFS_UBIFS_OPTS) -o $@ -r $<
-
-
-# This dependency statement is needed to ensure that all the $(O) files are
-# built *after* $(O) has been cleaned.
-$(BOOT_DEPENDS): $(O)/imagefile.cpio
 
 boot: $(BOOT_DEPENDS)
 
