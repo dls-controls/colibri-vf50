@@ -15,7 +15,7 @@ Contents
     :numbered:
     :maxdepth: 2
 
-    hardware
+    overview
     installing
     upgrading
     building

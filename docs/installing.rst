@@ -1,6 +1,7 @@
-.. _installing:
 .. default-role:: literal
 .. highlight:: none
+
+.. _installing:
 
 Fresh Installation
 ==================

@@ -358,3 +358,15 @@ upgrade: $(BOOT_FILES)
             cp $(BOOT_ROOT)/$$f $(UPGRADE_ROOT)$(UPGRADE_PREFIX)$$f; \
         done
 .PHONY: upgrade
+
+
+# ------------------------------------------------------------------------------
+# Documentation
+
+docs:
+	make -C docs
+.PHONY: docs
+
+clean-docs:
+	make -C docs clean
+.PHONY: clean-docs

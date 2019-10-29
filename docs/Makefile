@@ -1,5 +1,5 @@
 html: conf.py $(wildcard *.rst)
-	sphinx-build -b html . html
+	sphinx-build -nE -b html . html
 
 clean:
 	rm -rf html
