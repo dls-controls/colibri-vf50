@@ -16,7 +16,7 @@ d 755 /dls_sw
 d 777 /dls_sw/work
 d 777 /dls_sw/prod
 
-f 744 /etc/mount-extra
+f 644 /etc/mount-extra
 
 # Install the network configuration tool
 f 555 /sbin/configure-network
