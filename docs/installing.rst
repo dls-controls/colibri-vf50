@@ -53,7 +53,7 @@ Prepare the development board:
     is used to toggle power to the board, and two green LEDs halfway along the
     same edge are illuminated when the board is powered on.
 
-2.  Connect a straight-through RS232 cable to the UART A connector.  This is the
+2.  Connect a "null modem" RS232 cable to the UART A connector.  This is the
     bottom male 9-pin connector closest to the pink 3mm audio socket.  Configure
     the PC serial port as 115200N8.
 
@@ -108,9 +108,12 @@ procedure:
 
         >
 
-6.  At the prompt type `flashloader u-boot-nand.imx`.  This will replace WinCE
-    with u-boot.  Wait until `Flashing complete` is reported and the prompt is
-    returned::
+6.  At the prompt type::
+
+        flashloader u-boot-nand.imx
+
+    This will replace WinCE with u-boot.  Wait until `Flashing complete` is
+    reported and the prompt is returned::
 
         Flashing completed.
 

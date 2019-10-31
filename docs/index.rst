@@ -16,6 +16,7 @@ Contents
     :maxdepth: 2
 
     overview
+    network
     installing
     upgrading
     building
