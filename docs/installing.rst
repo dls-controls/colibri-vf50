@@ -151,4 +151,13 @@ procedure:
 Configuring Network Assignment
 ------------------------------
 
+A network address should be assigned using the :program:`configure-network`
+tool.  This can be run immediately after booting into the initial system.  An
+RS232 connection will be required until the network has been configured.
 
+First let the system boot, and hit return for a prompt.  Then run::
+
+    configure-network -w $network $hostname
+
+where *$network* is ``dev`` or ``pri``, and *$hostname* is a supported host
+name.  For more complex requirements, see :ref:`network`.

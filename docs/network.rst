@@ -83,12 +83,64 @@ entries:
 =============== ================================================================
 Section         Description
 =============== ================================================================
-[fstab]         Extra mount points for ``mount-extra`` service.
-[ntp]           Server identification for NTP server.
-[resolv]        DNS resolver information.
-[network]       Network definition.
-[valid-ips]     List of valid machine names and associated IP addresses.
+`[fstab]`_      Extra mount points for ``mount-extra`` service.
+`[ntp]`_        Server identification for NTP server.
+`[resolv]`_     DNS resolver information.
+`[network]`_    Network definition.
+`[valid-ips]`_  List of valid machine names and associated IP addresses.
 =============== ================================================================
+
+[fstab]
+~~~~~~~
+
+This contains a list of mount points in ``/etc/fstab`` format, of the form::
+
+    172.23.100.71:/exports/dls_sw/work  /dls_sw/work   nfs nolock,intr
+
+The first word is the NFS export, the second is the local mount point (which
+must already exist), the third word must be the string ``nfs``, and the fourth
+word is a list of nfs mount options.  The only sensible mount points available
+are ``/mnt``, ``/dls_sw/work``, ``/dls_sw/prod``, though in practice none of
+these are automatically mounted, and this functionality may be removed in a
+future version of the rootfs.
+
+[ntp]
+~~~~~
+
+This section is just a list of NTP server definitions of the form::
+
+    server 172.23.24.2
+
+where the first word must be the string ``server`` and the second word is the
+IP address of a reachable NTP server.  A number of servers can be specified.
+
+[resolv]
+~~~~~~~~
+
+This section contains lines in ``/etc/resolv.conf`` format.  Typically there is
+a ``search`` line followed by a number of ``nameserver`` lines.
+
+[network]
+~~~~~~~~~
+
+This section defines the network by specifying the following two or three
+values:
+
+=========== ====================================================================
+Key         Description
+=========== ====================================================================
+``network`` IP address of network after masking with netmask.
+``netmask`` Netmask of network, typically 255.255.240.0 for a /24 network.
+``gateway`` Optionally, the address of the network gateway.  If this is not
+            specified then addresses outside of the network are not reachable.
+=========== ====================================================================
+
+[valid-ips]
+~~~~~~~~~~~
+
+This is a list of valid machine names and IP addresses in the specified network.
+This is used to help with managing valid machine name assignments, but a name
+and IP pair can be manually assigned if necessary.
 
 
 System Network Configuration
