@@ -11,7 +11,7 @@ ubi part ubi
 tftpboot $loadaddr ${server_prefix}zImage
 ubi write $loadaddr kernel $filesize
 # Device tree
-tftpboot $loadaddr ${server_prefix}device-tree.dtp
+tftpboot $loadaddr ${server_prefix}device-tree.dtb
 ubi write $loadaddr dtb $filesize
 # Rootfs
 tftpboot $loadaddr ${server_prefix}rootfs.img
