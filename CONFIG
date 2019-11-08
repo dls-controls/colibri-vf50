@@ -4,8 +4,13 @@
 ROOTFS_TOP = /dls_sw/prod/targetOS/rootfs/1.12
 
 # Where to do the build.  Needs around 2GB free space!
-BUILD_TOP = /scratch/mga83/tmp/colibri-vf50
+BUILD_TOP = /scratch/$(USER)/tmp/colibri-vf50
 
+# Where to find the source files for rootfs
+TAR_FILES += /dls_sw/prod/targetOS/tar-files
+TAR_FILES += /dls_sw/work/targetOS/tar-files
+
+# Defaults for upgrade
 UPGRADE_PREFIX = /colibri-vf50/devel-
 UPGRADE_ROOT = /dls_sw/work/tftpboot/dev/
 

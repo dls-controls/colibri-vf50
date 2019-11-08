@@ -9,21 +9,21 @@ BUILD_TOP = $(TOP)/build
 U_BOOT_TAG = 2016.11-toradex
 KERNEL_TAG = toradex_vf_4.4
 
-# PKG_CONFIG_PATH = /usr/lib64/pkgconfig
-
 TOOLCHAIN = $(TOP)/TOOLCHAIN
 
 DEFAULT_TARGETS += boot
+
 
 # The following symbols are not given defaults but must be specified in the
 # CONFIG file.
 REQUIRED_SYMBOLS += ROOTFS_TOP
 REQUIRED_SYMBOLS += UPGRADE_PREFIX
 REQUIRED_SYMBOLS += UPGRADE_ROOT
-
-TAR_FILES += /dls_sw/prod/targetOS/tar-files
-TAR_FILES += /dls_sw/work/targetOS/tar-files
-
+REQUIRED_SYMBOLS += TAR_FILES
+# These must be defined in the TOOLCHAIN file.
+REQUIRED_SYMBOLS += BINUTILS_DIR
+REQUIRED_SYMBOLS += COMPILER_PREFIX
+REQUIRED_SYMBOLS += SYSROOT
 
 include CONFIG
 include $(TOOLCHAIN)
@@ -130,8 +130,12 @@ clean:
 	rm -rf $(BUILD_ROOT)
 .PHONY: clean
 
-clean-all: clean
+.clean-src:
 	-chmod -R +w $(SRC_ROOT)
+	rm -rf $(SRC_ROOT)
+.PHONY: .clean-src
+
+clean-all: clean clean-src
 	rm -rf $(BUILD_TOP)
 .PHONY: clean-all
 
