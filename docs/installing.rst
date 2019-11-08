@@ -1,6 +1,3 @@
-.. default-role:: literal
-.. highlight:: none
-
 .. _installing:
 
 Fresh Installation
@@ -23,29 +20,26 @@ Requirements and Preparation
 
 For installation the following is required:
 
-1.  `Colibri Evaluation board
-    <https://www.toradex.com/products/carrier-board/colibri-evaluation-board>`_
-    and power supply.
+1.  `Colibri Evaluation board`_ and power supply.
 2.  PC with RS232 port and cabling.
 3.  SD card.
 4.  Built files for installation, see :ref:`building`.  For this document these
-    will be assumed to be in a directory named `$BOOT`.
+    will be assumed to be in a directory named ``$BOOT``.
 
-Prepare the SD card as follows (this can be done using the `gnome-disks` tool):
+Prepare the SD card as follows (this can be done using the ``gnome-disks``
+tool):
 
 1.  Ensure that the SD card is formatted with a single FAT32 partition.  It
     seems necessary to delete the factory default partition so that the card is
     readable by Eboot.
-2.  Copy the following files from `$BOOT` to the SD card:
+2.  Copy the following files from ``$BOOT`` to the SD card:
 
-    * `u-boot-nand.imx`
-    * `install-rootfs.image`
-    * `zImage`
-    * `vf500-colibri-eval-v3.dtb`
-    * `rootfs.img`
-
-    .. note::
-        The filenames above will change.
+    * ``u-boot-nand.imx``
+    * ``install-script.image``
+    * ``zImage``
+    * ``device-tree.dtb``
+    * ``rootfs.img``
+    * ``state.img``
 
 Prepare the development board:
 
@@ -161,3 +155,6 @@ First let the system boot, and hit return for a prompt.  Then run::
 
 where *$network* is ``dev`` or ``pri``, and *$hostname* is a supported host
 name.  For more complex requirements, see :ref:`network`.
+
+..  _Colibri Evaluation board:
+    https://www.toradex.com/products/carrier-board/colibri-evaluation-board
