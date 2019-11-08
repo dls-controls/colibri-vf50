@@ -113,6 +113,9 @@
                 VF610_PAD_PTE22__GPIO_127   0x00ce      // PROG B
                 VF610_PAD_PTE13__GPIO_118   0x00c2      // DSO
                 VF610_PAD_PTE14__GPIO_119   0x00c2      // CLK
+                /* Extra ADC input on ADC0 channel 2. */
+                VF610_PAD_PTB0__ADC0_SE2    0x0001      // ADC input
+                VF610_PAD_PTD11__GPIO_90    0x0201      // Alert input
             >;
         };
 
