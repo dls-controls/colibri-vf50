@@ -46,6 +46,8 @@ OPTIONS += $(configdir)/upgrade
 OPTIONS += $(configdir)/network
 OPTIONS += mount-extra
 
+# This overrides the rootfs default.  Provides default phasing definitions for
+# startup (and shutdown) scripts.
 STARTUP_LIST = $(configdir)/startup_list
 
 

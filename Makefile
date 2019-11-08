@@ -30,7 +30,6 @@ include $(TOOLCHAIN)
 
 ARCH = arm
 
-# (we'll revisit this)
 # Both kernel and u-boot builds need CROSS_COMPILE and ARCH to be exported
 EXPORTS = $(call EXPORT,CROSS_COMPILE ARCH)
 

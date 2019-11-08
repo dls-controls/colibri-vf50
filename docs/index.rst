@@ -16,10 +16,11 @@ Contents
     :maxdepth: 2
 
     overview
-    network
     installing
+    network
     upgrading
     building
+    structure
     development
 
 :ref:`genindex`
