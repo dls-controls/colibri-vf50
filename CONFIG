@@ -10,8 +10,7 @@ BUILD_TOP = /scratch/$(USER)/tmp/colibri-vf50
 TAR_FILES += /dls_sw/prod/targetOS/tar-files
 TAR_FILES += /dls_sw/work/targetOS/tar-files
 
-# Defaults for upgrade
-UPGRADE_PREFIX = /colibri-vf50/devel-
-UPGRADE_ROOT = /dls_sw/work/tftpboot/dev/
+# Where to place upgrade files for upgrade server
+UPGRADE_ROOT = /dls_sw/work/tftpboot/dev/colibri-vf50/
 
 # vim: set filetype=make:

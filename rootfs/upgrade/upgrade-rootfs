@@ -14,7 +14,7 @@ tftp_get()
 }
 
 
-TFTP_PREFIX=/
+TFTP_DIR=/
 TFTP_SERVER=none
 
 # Pick up defaults
@@ -27,24 +27,24 @@ CONFIRM=false
 REBOOT_NOW=false
 
 # Process options
-while getopts 'P:S:prfCh' option; do
+while getopts 'd:S:prfCh' option; do
     case "$option" in
-        P)  TFTP_PREFIX="$OPTARG" ;;
+        d)  TFTP_DIR="$OPTARG" ;;
         S)  TFTP_SERVER="$OPTARG" ;;
         p)  UPGRADE_STATE=1 ;;
         f)  TEST_FILES=false ;;
         r)  REBOOT_NOW=true ;;
         C)  CONFIRM=true ;;
         h)  cat <<EOF
-Usage: upgrade-rootfs [options]
+Usage: upgrade-rootfs [options] version
 
 Configures upgrade of root file system from tftp server.
-    -P: Specify TFTP prefix (default is $TFTP_PREFIX)
+    -d: Specify TFTP directory (default is $TFTP_DIR)
     -S: Specify TFTP server (default is $TFTP_SERVER)
     -p  If this flag is set then the persistent state will be replaced.
     -f  This flag can be set to bypass validation of the upgrade files on the
         tftp server.
-    -r  If set then reboot will be triggered immediately.
+    -r  If set (together with -C) then reboot will be triggered immediately.
     -C  This flag must be set to confirm the upgrade, otherwise the upgrade will
         be tested but not actually applied.
 EOF
@@ -52,6 +52,14 @@ EOF
         *)  Error 'Invalid option: try -h for help' ;;
     esac
 done
+
+# Read mandatory version
+shift $((OPTIND-1))
+[ $# -eq 1 ]  ||  Error 'Must specify version.  Try -h for help'
+VERSION="$1"
+
+# Assemble target prefix from directory and version
+TFTP_PREFIX=$TFTP_DIR/$VERSION-
 
 
 # Normalise the server name and check it is responding

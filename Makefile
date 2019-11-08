@@ -17,9 +17,8 @@ DEFAULT_TARGETS += boot
 # The following symbols are not given defaults but must be specified in the
 # CONFIG file.
 REQUIRED_SYMBOLS += ROOTFS_TOP
-REQUIRED_SYMBOLS += UPGRADE_PREFIX
-REQUIRED_SYMBOLS += UPGRADE_ROOT
 REQUIRED_SYMBOLS += TAR_FILES
+REQUIRED_SYMBOLS += UPGRADE_ROOT
 # These must be defined in the TOOLCHAIN file.
 REQUIRED_SYMBOLS += BINUTILS_DIR
 REQUIRED_SYMBOLS += COMPILER_PREFIX
@@ -358,8 +357,11 @@ UPGRADE_FILES += state.img
 
 upgrade: $(BOOT_FILES)
 	for f in $(UPGRADE_FILES); do \
-            cp $(BOOT_ROOT)/$$f $(UPGRADE_ROOT)$(UPGRADE_PREFIX)$$f; \
+            cp $(BOOT_ROOT)/$$f $(UPGRADE_ROOT)/$(GIT_VERSION_SUFFIX)-$$f; \
         done
+	@echo
+	@echo Upgrade files are version: $(GIT_VERSION_SUFFIX)
+	@echo
 .PHONY: upgrade
 
 
