@@ -355,7 +355,7 @@ UPGRADE_FILES += device-tree.dtb
 UPGRADE_FILES += rootfs.img
 UPGRADE_FILES += state.img
 
-upgrade: $(BOOT_FILES)
+upgrade: $(BOOT_FILES) boot
 	for f in $(UPGRADE_FILES); do \
             cp $(BOOT_ROOT)/$$f $(UPGRADE_ROOT)/$(GIT_VERSION_SUFFIX)-$$f; \
         done
