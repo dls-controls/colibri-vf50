@@ -24,6 +24,10 @@ The following keys must be set in ``CONFIG``:
     This must point to one or more directories containing the source tar files
     used to build the base system.  The required tar files are listed below.
 
+``UPGRADE_ROOT``
+    If this symbol is defined then ``make upgrade`` will place the files needed
+    for performing a remote upgrade in this directory.
+
 The following keys must be set in ``TOOLCHAIN``:
 
 ``BINUTILS_DIR``
