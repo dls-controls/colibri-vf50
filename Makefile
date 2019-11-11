@@ -128,10 +128,10 @@ clean:
 	rm -rf $(BUILD_ROOT)
 .PHONY: clean
 
-.clean-src:
+clean-src:
 	-chmod -R +w $(SRC_ROOT)
 	rm -rf $(SRC_ROOT)
-.PHONY: .clean-src
+.PHONY: clean-src
 
 clean-all: clean clean-src
 	rm -rf $(BUILD_TOP)
