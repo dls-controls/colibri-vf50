@@ -70,14 +70,33 @@
     status = "okay";
 };
 
-/* GPIO IO Mux bit assignments:
- *  SPEED   0x0000      50 MHz
- *          0x1000      100 MHz
- *          0x3000      200 MHz
- *  SRE     0x0000      Slow slew rate
- *          0x0800      Fast slew rate
- *  HYS     0x0200      Schmitt trigger input
- */
+/* GPIO IO Mux bit assignments.  The table below describing the pin control
+ * codes is taken from the development guide, and is itself taken from the VFxxx
+ * Controller Reference manual.
+ *
+ * Bits    Mask    Mask    Function
+ * 0       0x0001  IBE     Set to 1 to enable input buffer
+ * 1       0x0002  OBE     Set to 1 to enable output buffer
+ * 2       0x0004  PUE     Set to 1 for output pull-up/down, 0 for keeper if
+ *                         enabled in PKE
+ * 3       0x0008  PKE     Set to 1 to enable pull-up/down or keeper
+ * 5:4     0x0030  PUS     Pull up or down and strength if enabled in PKE.  0 =>
+ *                         100 kOhm pull-down, 1 => 47 kOhm pull-up,
+ *                         2 => 100 kOhm pull-up, 3 => 22 kOhm pull-up.
+ * 8:6     0x01C0  DSE     Drive strength field.  0 => output disabled,
+ *                         1 => 150 Ohm, 2 => 75 Ohm, 3 => 50 Ohm, 4 => 37 Ohm,
+ *                         5 => 30 Ohm, 6 => 25 Ohm, 7 => 20 Ohm.
+ * 9       0x0200  HYS     Set to 1 for Schmitt trigger input, 0 for CMOS
+ * 10      0x0400  ODE     Set to 1 for open drain output
+ * 11      0x0800  SRE     Set to 1 for fast slew rate
+ * 13:12   0x3000  SPEED   Speed selection.  0 => 50 MHz, 1, 2 => 100 MHz,
+ *                         3 => 200 MHz.
+ *
+ * We program the FPGA output pins to avoid interfering as far as possible with
+ * the FPGA's shared use of the CCLK and DSO pins (used for access to the Flash
+ * configuration), and to try and avoid triggering a reset of the FPGA.  This is
+ * done by leaving the outputs disabled until needed, and leaving the PROGB and
+ * CCLK pins pulled up and down respectively. */
 &iomuxc {
     vf610-colibri {
         /* We configure the general purpose GPIOs here.  We overwrite the
@@ -104,15 +123,15 @@
                 /* DPS ADC FPGA programming. */
                 VF610_PAD_PTC1__GPIO_46     0x0001      // ADC INIT B
                 VF610_PAD_PTD13__GPIO_92    0x0001      // ADC DONE
-                VF610_PAD_PTA12__GPIO_5     0x00ce      // ADC PROG B
-                VF610_PAD_PTD28__GPIO_66    0x00c2      // ADC DSO
-                VF610_PAD_PTD31__GPIO_63    0x00c2      // ADC CLK
+                VF610_PAD_PTA12__GPIO_5     0x00ed      // ADC PROG B
+                VF610_PAD_PTD28__GPIO_66    0x00c1      // ADC DSO
+                VF610_PAD_PTD31__GPIO_63    0x00cd      // ADC CLK
                 /* Digital Interface FPGA programming. */
                 VF610_PAD_PTA17__GPIO_7     0x0001      // INIT B
                 VF610_PAD_PTE21__GPIO_126   0x0001      // DONE
-                VF610_PAD_PTE22__GPIO_127   0x00ce      // PROG B
-                VF610_PAD_PTE13__GPIO_118   0x00c2      // DSO
-                VF610_PAD_PTE14__GPIO_119   0x00c2      // CLK
+                VF610_PAD_PTE22__GPIO_127   0x00ed      // PROG B
+                VF610_PAD_PTE13__GPIO_118   0x00c1      // DSO
+                VF610_PAD_PTE14__GPIO_119   0x00cd      // CLK
                 /* Extra ADC input on ADC0 channel 2. */
                 VF610_PAD_PTB0__ADC0_SE2    0x0001      // ADC input
                 VF610_PAD_PTD11__GPIO_90    0x0201      // Alert input
