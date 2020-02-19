@@ -9,6 +9,8 @@
 
     aliases {
         ethernet0 = &fec1;
+        dfl1 = &dfl1;
+        dfl2 = &dfl2;
     };
 };
 
@@ -120,18 +122,6 @@
                 VF610_PAD_PTE5__GPIO_110    0x0000      // SPARE 7
                 VF610_PAD_PTE6__GPIO_111    0x0000      // SPARE 8
                 VF610_PAD_PTD25__GPIO_69    0x0000      // SPARE 9
-                /* DPS ADC FPGA programming. */
-                VF610_PAD_PTC1__GPIO_46     0x0001      // ADC INIT B
-                VF610_PAD_PTD13__GPIO_92    0x0001      // ADC DONE
-                VF610_PAD_PTA12__GPIO_5     0x00ed      // ADC PROG B
-                VF610_PAD_PTD28__GPIO_66    0x00c1      // ADC DSO
-                VF610_PAD_PTD31__GPIO_63    0x00cd      // ADC CLK
-                /* Digital Interface FPGA programming. */
-                VF610_PAD_PTA17__GPIO_7     0x0001      // INIT B
-                VF610_PAD_PTE21__GPIO_126   0x0001      // DONE
-                VF610_PAD_PTE22__GPIO_127   0x00ed      // PROG B
-                VF610_PAD_PTE13__GPIO_118   0x00c1      // DSO
-                VF610_PAD_PTE14__GPIO_119   0x00cd      // CLK
                 /* Extra ADC input on ADC0 channel 2. */
                 VF610_PAD_PTB0__ADC0_SE2    0x0001      // ADC input
                 VF610_PAD_PTD11__GPIO_90    0x0201      // Alert input
@@ -147,5 +137,56 @@
             >;
         };
 
+        pinctrl_dls_fpga1: fpga1grp {
+            fsl,pins = <
+                /* DPS ADC FPGA programming. */
+                VF610_PAD_PTC1__GPIO_46     0x0001      // ADC INIT B
+                VF610_PAD_PTD13__GPIO_92    0x0001      // ADC DONE
+                VF610_PAD_PTA12__GPIO_5     0x00ed      // ADC PROG B
+                VF610_PAD_PTD28__GPIO_66    0x00c1      // ADC DSO
+                VF610_PAD_PTD31__GPIO_63    0x00cd      // ADC CLK
+            >;
+        };
+
+        pinctrl_dls_fpga2: fpga2grp {
+            fsl,pins = <
+                /* Digital Interface FPGA programming. */
+                VF610_PAD_PTA17__GPIO_7     0x0001      // INIT B
+                VF610_PAD_PTE21__GPIO_126   0x0001      // DONE
+                VF610_PAD_PTE22__GPIO_127   0x00ed      // PROG B
+                VF610_PAD_PTE13__GPIO_118   0x00c1      // DSO
+                VF610_PAD_PTE14__GPIO_119   0x00cd      // CLK
+            >;
+        };
+
+        pinctrl_hog_1: hoggrp-1 {
+            fsl,pins = <>;
+        };
+    };
+};
+
+/ {
+    dfl1: dfl@1 {
+        compatible = "dls,fpga_loader";
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_dls_fpga1>;
+        init-gpios = <&gpio1 14 GPIO_ACTIVE_HIGH>;
+        done-gpios = <&gpio2 28 GPIO_ACTIVE_HIGH>;
+        prog-gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>;
+        d0-gpios = <&gpio2 2 GPIO_ACTIVE_HIGH>;
+        clk-gpios = <&gpio1 31 GPIO_ACTIVE_HIGH>;
+        status = "okay";
+    };
+
+    dfl2: dfl@2 {
+        compatible = "dls,fpga_loader";
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_dls_fpga2>;
+        init-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+        done-gpios = <&gpio3 30 GPIO_ACTIVE_HIGH>;
+        prog-gpios = <&gpio3 31 GPIO_ACTIVE_HIGH>;
+        d0-gpios = <&gpio3 22 GPIO_ACTIVE_HIGH>;
+        clk-gpios = <&gpio3 23 GPIO_ACTIVE_HIGH>;
+        status = "okay";
     };
 };
