@@ -276,6 +276,15 @@ mtd-utils: $(MKFS_UBIFS)
 
 
 # ------------------------------------------------------------------------------
+
+LOAD_FPGA_DIR := $(TOP)/driver/dfl
+LOAD_FPGA = $(LOAD_FPGA_DIR)/dls_fpga_loader.ko
+
+
+$(LOAD_FPGA): kernel
+	$(EXPORTS) $(MAKE) -C $(KERNEL_BUILD) SUBDIRS=$(LOAD_FPGA_DIR) modules
+
+# ------------------------------------------------------------------------------
 # File system building
 #
 # This is the installed target file system
@@ -305,10 +314,11 @@ ROOTFS_IMAGE_DEPENDS += $(MKFS_UBIFS)
 ROOTFS_IMAGE_DEPENDS += $(U_BOOT_IMAGE)
 ROOTFS_IMAGE_DEPENDS += $(FW_PRINTENV)
 ROOTFS_IMAGE_DEPENDS += $(shell find rootfs -type f)
+ROOTFS_IMAGE_DEPENDS += $(LOAD_FPGA)
 
 # We have a dependency on u-boot so that the mkimage command is available
 $(ROOTFS_IMAGE): $(ROOTFS_IMAGE_DEPENDS)
-	$(call MAKE_ROOTFS) make
+	$(call MAKE_ROOTFS) make LOAD_FPGA=$(LOAD_FPGA)
 
 $(ROOTFS_FILES): $(ROOTFS_IMAGE)
 
