@@ -133,7 +133,10 @@ clean-src:
 	rm -rf $(SRC_ROOT)
 .PHONY: clean-src
 
-clean-all: clean clean-src
+clean-driver:
+	$(EXPORTS) $(MAKE) -C $(KERNEL_BUILD) SUBDIRS=$(LOAD_FPGA_DIR) clean
+
+clean-all: clean clean-src clean-driver
 	rm -rf $(BUILD_TOP)
 .PHONY: clean-all
 
