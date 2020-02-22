@@ -135,6 +135,7 @@ clean-src:
 
 clean-driver:
 	$(EXPORTS) $(MAKE) -C $(KERNEL_BUILD) SUBDIRS=$(LOAD_FPGA_DIR) clean
+	rm -rf $(DRIVER_O)
 
 clean-all: clean clean-src clean-driver
 	rm -rf $(BUILD_TOP)
@@ -280,12 +281,18 @@ mtd-utils: $(MKFS_UBIFS)
 
 # ------------------------------------------------------------------------------
 
-LOAD_FPGA_DIR := $(TOP)/driver/dfl
+DRIVER_DIR := $(TOP)/driver
+DRIVER_O := $(DRIVER_DIR)/lib
+LOAD_FPGA_DIR := $(DRIVER_DIR)/dfl
 LOAD_FPGA = $(LOAD_FPGA_DIR)/dls_fpga_loader.ko
 
 
 $(LOAD_FPGA): kernel
-	$(EXPORTS) $(MAKE) -C $(KERNEL_BUILD) SUBDIRS=$(LOAD_FPGA_DIR) modules
+	$(EXPORTS) $(MAKE) -C $(KERNEL_BUILD) M=$(LOAD_FPGA_DIR) modules
+
+$(DRIVER_O): $(LOAD_FPGA)
+	$(EXPORTS) $(MAKE) -C $(KERNEL_BUILD) M=$(LOAD_FPGA_DIR) modules_install INSTALL_MOD_PATH=$(DRIVER_DIR)
+
 
 # ------------------------------------------------------------------------------
 # File system building
@@ -317,11 +324,11 @@ ROOTFS_IMAGE_DEPENDS += $(MKFS_UBIFS)
 ROOTFS_IMAGE_DEPENDS += $(U_BOOT_IMAGE)
 ROOTFS_IMAGE_DEPENDS += $(FW_PRINTENV)
 ROOTFS_IMAGE_DEPENDS += $(shell find rootfs -type f)
-ROOTFS_IMAGE_DEPENDS += $(LOAD_FPGA)
+ROOTFS_IMAGE_DEPENDS += $(DRIVER_O)
 
 # We have a dependency on u-boot so that the mkimage command is available
 $(ROOTFS_IMAGE): $(ROOTFS_IMAGE_DEPENDS)
-	$(call MAKE_ROOTFS) make LOAD_FPGA=$(LOAD_FPGA)
+	$(call MAKE_ROOTFS) make DRIVER_O=$(DRIVER_O)
 
 $(ROOTFS_FILES): $(ROOTFS_IMAGE)
 
