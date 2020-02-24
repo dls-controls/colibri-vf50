@@ -184,7 +184,7 @@ static int dfl_probe(struct platform_device *pdev)
         return PTR_ERR(prv->clk_gpio);
     rc = misc_register(&prv->miscdev);
     if (rc < 0) {
-        pr_info("Could not register misc device");
+        pr_info("Could not register misc device\n");
         return rc;
     }
     platform_set_drvdata(pdev, prv);
