@@ -1,0 +1,4 @@
+#!/bin/sh
+exec 2>/dev/null
+find /sys/devices/ -name uevent -exec grep -h MODALIAS= '{}' + \
+    | uniq | cut -c 10- | xargs modprobe -a

@@ -56,6 +56,7 @@ final-install:
 	$(useradd) -p '' -u 37134 -g 500 epics_user
 	cat $(configdir)/mdev.conf >>$(sysroot)/etc/mdev.conf
 	$(startup) $(configdir)/opt-etc
+	$(startup) $(configdir)/coldplug
 	cp -rf "$(DRIVER_O)/modules" "$(sysroot)/lib"
 
 # This assembles all the script and file system images

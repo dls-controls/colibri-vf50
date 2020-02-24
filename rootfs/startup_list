@@ -1,6 +1,7 @@
 # List of startup packages and assigned actions.  This is read by the $(startup)
 # command and can be overridden in the TARGET configuration.
 
+coldplug        S50
 network         S100
 inetd           S200
 mount-extra     -       K200
