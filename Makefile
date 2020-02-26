@@ -133,12 +133,11 @@ clean-src:
 	rm -rf $(SRC_ROOT)
 .PHONY: clean-src
 
-clean-driver:
+clean-drivers:
 	$(EXPORTS) $(MAKE) -C $(KERNEL_BUILD) SUBDIRS=$(LOAD_FPGA_BUILD_DIR) \
             clean
-	rm -rf $(DRIVERS_O)
 
-clean-all: clean clean-src clean-driver
+clean-all: clean clean-src
 	rm -rf $(BUILD_TOP)
 .PHONY: clean-all
 
