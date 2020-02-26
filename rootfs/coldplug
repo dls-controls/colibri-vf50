@@ -1,4 +1,10 @@
 #!/bin/sh
 exec 2>/dev/null
+# We need this because mdev will not load modules for platform
+# devices (which tend to be builtin in kernel), and we cannot
+# hotplug it either, because the device is detected earlier
+# than mdev is started.
+# The solution is iterating over each detected device uevent
+# and modprobing the associated modalias.
 find /sys/devices/ -name uevent -exec grep -h MODALIAS= '{}' + |
     sort -u | cut -c 10- | xargs modprobe -a
