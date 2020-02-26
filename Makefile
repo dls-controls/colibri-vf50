@@ -287,18 +287,15 @@ LOAD_FPGA_SRC := $(DRIVERS_SRC)/dfl
 
 DRIVERS_BUILD_DIR = $(BUILD_ROOT)/drivers
 LOAD_FPGA_BUILD_DIR = $(DRIVERS_BUILD_DIR)/dfl
-LOAD_FPGA_FILES = $(wildcard drivers/dfl/*)
-LOAD_FPGA_BUILD_FILES = \
-    $(LOAD_FPGA_FILES:drivers/dfl/%=$(LOAD_FPGA_BUILD_DIR)/%)
 LOAD_FPGA = $(LOAD_FPGA_BUILD_DIR)/dls_fpga_loader.ko
 DRIVERS_O := $(BUILD_TOP)/drivers
 
 
-$(LOAD_FPGA_BUILD_FILES): $(LOAD_FPGA_SRC)
+$(LOAD_FPGA_BUILD_DIR): $(LOAD_FPGA_SRC)
 	mkdir -p "$(LOAD_FPGA_BUILD_DIR)"
 	cp -s -r -f "$(LOAD_FPGA_SRC)" "$(DRIVERS_BUILD_DIR)"
 
-$(LOAD_FPGA): $(ZIMAGE) $(LOAD_FPGA_BUILD_FILES)
+$(LOAD_FPGA): $(ZIMAGE) $(LOAD_FPGA_BUILD_DIR)
 	$(EXPORTS) $(MAKE) -C $(KERNEL_BUILD) M=$(LOAD_FPGA_BUILD_DIR) \
             modules
 
@@ -306,6 +303,7 @@ $(DRIVERS_O): $(LOAD_FPGA)
 	mkdir -p $(DRIVERS_O)
 	$(EXPORTS) $(MAKE) -C $(KERNEL_BUILD) M=$(LOAD_FPGA_BUILD_DIR) \
             modules_install INSTALL_MOD_PATH=$(DRIVERS_O)
+	touch $@
 
 
 # ------------------------------------------------------------------------------
