@@ -9,8 +9,6 @@
 
     aliases {
         ethernet0 = &fec1;
-        dfl1 = &dfl1;
-        dfl2 = &dfl2;
     };
 };
 
