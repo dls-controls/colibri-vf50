@@ -57,7 +57,7 @@ final-install:
 	cat $(configdir)/mdev.conf >>$(sysroot)/etc/mdev.conf
 	$(startup) $(configdir)/opt-etc
 	$(startup) $(configdir)/coldplug
-	cp -rf "$(DRIVER_O)/modules" "$(sysroot)/lib"
+	cp -rf "$(DRIVERS_O)/lib" "$(sysroot)/lib"
 
 # This assembles all the script and file system images
 BOOT = $(configdir)/install
