@@ -11,6 +11,7 @@
 #define MAX_DEV_NAME_SIZE 32
 
 struct dfl_data {
+    char name[MAX_DEV_NAME_SIZE];
     struct mutex mutex;
     struct miscdevice miscdev;
     struct gpio_desc *init_gpio;
@@ -154,7 +155,6 @@ static int dfl_probe(struct platform_device *pdev)
     const char *name;
     struct device *dev = &pdev->dev;
     struct device_node *np = dev->of_node;
-    char *dname = devm_kzalloc(dev, MAX_DEV_NAME_SIZE, GFP_KERNEL);
     struct dfl_data *prv = devm_kzalloc(dev, sizeof(struct dfl_data), GFP_KERNEL);
     pr_info("Probing dls_fpga_loader\n");
     rc = of_property_read_string(np, "dev_name", &name);
@@ -162,8 +162,8 @@ static int dfl_probe(struct platform_device *pdev)
         pr_err("Unable to get device name\n");
         return rc;
     }
-    strncpy(dname, name, MAX_DEV_NAME_SIZE);
-    prv->miscdev.name = dname;
+    strncpy(prv->name, name, MAX_DEV_NAME_SIZE);
+    prv->miscdev.name = prv->name;
     prv->miscdev.minor = MISC_DYNAMIC_MINOR;
     prv->miscdev.fops = &dfl_fops;
     prv->init_gpio = devm_gpiod_get(dev, "init", GPIOD_IN);
