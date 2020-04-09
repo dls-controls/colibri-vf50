@@ -93,7 +93,6 @@ static void send_data(struct dfl_data *dfl, char *buf, size_t size)
 
 static ssize_t dfl_write(struct file *file, const char __user *ubuf, size_t size, loff_t *off)
 {
-    int rc;
     struct dfl_data *dfl = to_dfl_data(file);
     char buf[MAX_BUFFER_SIZE];
     size_t wsize;
@@ -103,15 +102,14 @@ static ssize_t dfl_write(struct file *file, const char __user *ubuf, size_t size
         if (wsize > MAX_BUFFER_SIZE) {
             wsize = MAX_BUFFER_SIZE;
         }
-        rc = copy_from_user(buf, ubuf + ubuf_i, wsize);
-        if (rc != 0) {
+        if (copy_from_user(buf, ubuf + ubuf_i, wsize)) {
             pr_err("Error while copying user data\n");
             return -EFAULT;
         }
         send_data(dfl, buf, wsize);
         ubuf_i += wsize;
     }
-    return wsize;
+    return size;
 }
 
 static int dfl_release(struct inode *inode, struct file *file)
