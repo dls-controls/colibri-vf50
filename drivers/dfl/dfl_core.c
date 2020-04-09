@@ -108,6 +108,7 @@ static ssize_t dfl_write(struct file *file, const char __user *ubuf, size_t size
         }
         send_data(dfl, buf, wsize);
         ubuf_i += wsize;
+        *off += wsize;
     }
     return size;
 }
