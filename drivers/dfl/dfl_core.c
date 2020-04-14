@@ -4,11 +4,13 @@
 #include <linux/miscdevice.h>
 #include <linux/of.h>
 #include <linux/gpio/consumer.h>
+#include <linux/time.h>
 #include <linux/delay.h>
 #include <linux/uaccess.h>
 
-#define MAX_BUFFER_SIZE 128
-#define MAX_DEV_NAME_SIZE 32
+#define MAX_BUFFER_SIZE (128)
+#define MAX_DEV_NAME_SIZE (32)
+#define GPIO_TIMEOUT_MS (1000)
 
 struct dfl_data {
     char name[MAX_DEV_NAME_SIZE];
@@ -27,15 +29,16 @@ static inline struct dfl_data *to_dfl_data(struct file *file)
     return container_of(misc, struct dfl_data, miscdev);
 }
 
-static int wait_for_io(struct gpio_desc *io, int eval)
+static int wait_for_io(struct gpio_desc *io, int eval, int sleep)
 {
-    int val, i;
-    // times out in approx 1s
-    for (i=0; i < 100; i++) {
+    int val;
+    unsigned long timeout = jiffies + msecs_to_jiffies(GPIO_TIMEOUT_MS);
+    while (!time_after(jiffies, timeout)) {
         val = gpiod_get_value(io);
         if (val == eval)
             break;
-        msleep(10);
+        if (sleep)
+            msleep(10);
     }
     if (val != eval) {
         pr_err("gpio %p won't go to %d\n", io, eval);
@@ -61,11 +64,11 @@ static int dfl_open(struct inode *inode, struct file *file)
         goto err1;
     }
     gpiod_set_value(dfl->prog_gpio, 0);
-    rc = wait_for_io(dfl->init_gpio, 0);
+    rc = wait_for_io(dfl->init_gpio, 0, 0);
     gpiod_set_value(dfl->prog_gpio, 1);
     if (rc)
         goto err1;
-    rc = wait_for_io(dfl->init_gpio, 1);
+    rc = wait_for_io(dfl->init_gpio, 1, 1);
     if (rc)
         goto err1;
     return 0;
