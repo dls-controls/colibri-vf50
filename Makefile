@@ -304,6 +304,8 @@ $(DRIVERS_O): $(LOAD_FPGA)
             modules_install INSTALL_MOD_PATH=$(DRIVERS_O)
 	touch $@
 
+drivers: $(DRIVERS_O)
+.PHONY: drivers
 
 # ------------------------------------------------------------------------------
 # File system building
