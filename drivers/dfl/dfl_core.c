@@ -179,10 +179,10 @@ static int dfl_probe(struct platform_device *pdev)
     prv->prog_gpio = devm_gpiod_get(dev, "prog", GPIOD_OUT_HIGH);
     if (IS_ERR(prv->prog_gpio))
         return PTR_ERR(prv->prog_gpio);
-    prv->d0_gpio = devm_gpiod_get(dev, "d0", GPIOD_OUT_LOW);
+    prv->d0_gpio = devm_gpiod_get(dev, "d0", GPIOD_IN);
     if (IS_ERR(prv->d0_gpio))
         return PTR_ERR(prv->d0_gpio);
-    prv->clk_gpio = devm_gpiod_get(dev, "clk", GPIOD_OUT_LOW);
+    prv->clk_gpio = devm_gpiod_get(dev, "clk", GPIOD_IN);
     if (IS_ERR(prv->clk_gpio))
         return PTR_ERR(prv->clk_gpio);
     rc = misc_register(&prv->miscdev);
