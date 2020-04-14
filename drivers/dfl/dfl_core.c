@@ -7,7 +7,7 @@
 #include <linux/delay.h>
 #include <linux/uaccess.h>
 
-#define MAX_BUFFER_SIZE 256
+#define MAX_BUFFER_SIZE 128
 #define MAX_DEV_NAME_SIZE 32
 
 struct dfl_data {
