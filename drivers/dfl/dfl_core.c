@@ -107,6 +107,10 @@ static ssize_t dfl_write(struct file *file, const char __user *ubuf, size_t size
             return -EFAULT;
         }
         send_data(dfl, buf, wsize);
+        if (!gpiod_get_value(dfl->init_gpio)) {
+            pr_err("Error while transfering data, init pin went low");
+            return -EIO;
+        }
         ubuf_i += wsize;
         *off += wsize;
     }
