@@ -94,7 +94,8 @@ static void send_data(struct dfl_data *dfl, char *buf, size_t size)
     }
 }
 
-static ssize_t dfl_write(struct file *file, const char __user *ubuf, size_t size, loff_t *off)
+static ssize_t dfl_write(struct file *file, const char __user *ubuf,
+                         size_t size, loff_t *off)
 {
     struct dfl_data *dfl = to_dfl_data(file);
     char buf[MAX_BUFFER_SIZE];
@@ -161,7 +162,8 @@ static int dfl_probe(struct platform_device *pdev)
     const char *name;
     struct device *dev = &pdev->dev;
     struct device_node *np = dev->of_node;
-    struct dfl_data *prv = devm_kzalloc(dev, sizeof(struct dfl_data), GFP_KERNEL);
+    struct dfl_data *prv = devm_kzalloc(dev, sizeof(struct dfl_data),
+        GFP_KERNEL);
     pr_info("Probing dls_fpga_loader\n");
     rc = of_property_read_string(np, "dev_name", &name);
     if (rc) {
