@@ -33,14 +33,16 @@ static int wait_for_io(struct gpio_desc *io, int eval, int sleep)
 {
     int val;
     unsigned long timeout = jiffies + msecs_to_jiffies(GPIO_TIMEOUT_MS);
-    while (!time_after(jiffies, timeout)) {
+    while (!time_after(jiffies, timeout))
+    {
         val = gpiod_get_value(io);
         if (val == eval)
             break;
         if (sleep)
             msleep(10);
     }
-    if (val != eval) {
+    if (val != eval)
+    {
         pr_err("gpio %p won't go to %d\n", io, eval);
         return -EIO;
     }
@@ -53,16 +55,19 @@ static int dfl_open(struct inode *inode, struct file *file)
     struct dfl_data *dfl = to_dfl_data(file);
     pr_info("Opening %s\n", dfl->miscdev.name);
     mutex_lock(&dfl->mutex);
-    if (gpiod_direction_output(dfl->d0_gpio, 0)) {
+    if (gpiod_direction_output(dfl->d0_gpio, 0))
+    {
         rc = -EIO;
         pr_err("Error while setting data pin direction\n");
         goto err1;
     }
-    if (gpiod_direction_output(dfl->clk_gpio, 0)) {
+    if (gpiod_direction_output(dfl->clk_gpio, 0))
+    {
         rc = -EIO;
         pr_err("Error while setting clk pin direction\n");
         goto err1;
     }
+
     gpiod_set_value(dfl->prog_gpio, 0);
     rc = wait_for_io(dfl->init_gpio, 0, 0);
     gpiod_set_value(dfl->prog_gpio, 1);
@@ -72,6 +77,7 @@ static int dfl_open(struct inode *inode, struct file *file)
     if (rc)
         goto err1;
     return 0;
+
 err1:
     mutex_unlock(&dfl->mutex);
     return rc;
@@ -86,32 +92,36 @@ static void clk(struct dfl_data *dfl)
 static void send_data(struct dfl_data *dfl, char *buf, size_t size)
 {
     int i, j;
-    for(i=0; i < size; i++) {
-        for (j=7; j >= 0; j--) {
+    for(i = 0; i < size; i++)
+    {
+        for (j = 7; j >= 0; j--)
+        {
             gpiod_set_value(dfl->d0_gpio, (buf[i]>>j) & 1);
             clk(dfl);
         }
     }
 }
 
-static ssize_t dfl_write(struct file *file, const char __user *ubuf,
-                         size_t size, loff_t *off)
+static ssize_t dfl_write(
+    struct file *file, const char __user *ubuf, size_t size, loff_t *off)
 {
     struct dfl_data *dfl = to_dfl_data(file);
     char buf[MAX_BUFFER_SIZE];
     size_t wsize;
     size_t ubuf_i = 0;
-    while (ubuf_i < size) {
+    while (ubuf_i < size)
+    {
         wsize = size - ubuf_i;
-        if (wsize > MAX_BUFFER_SIZE) {
+        if (wsize > MAX_BUFFER_SIZE)
             wsize = MAX_BUFFER_SIZE;
-        }
-        if (copy_from_user(buf, ubuf + ubuf_i, wsize)) {
+        if (copy_from_user(buf, ubuf + ubuf_i, wsize))
+        {
             pr_err("Error while copying user data\n");
             return -EFAULT;
         }
         send_data(dfl, buf, wsize);
-        if (!gpiod_get_value(dfl->init_gpio)) {
+        if (!gpiod_get_value(dfl->init_gpio))
+        {
             pr_err("Error while transfering data, init pin went low\n");
             return -EIO;
         }
@@ -128,31 +138,31 @@ static int dfl_release(struct inode *inode, struct file *file)
     int rc = 0;
     struct dfl_data *dfl = to_dfl_data(file);
     pr_info("Closing %s\n", dfl->miscdev.name);
-    for (i=0; i < 1000; i++) {
+    for (i = 0; i < 1000; i++)
+    {
         val = gpiod_get_value(dfl->done_gpio);
         if (val == 1)
             break;
         clk(dfl);
     }
-    if (val != 1) {
+    if (val != 1)
+    {
         pr_err("Done signal timed out\n");
         rc = -EIO;
     }
-    if (gpiod_direction_input(dfl->d0_gpio)) {
+    if (gpiod_direction_input(dfl->d0_gpio))
         pr_err("Error while setting data pin direction\n");
-    }
-    if (gpiod_direction_input(dfl->clk_gpio)) {
+    if (gpiod_direction_input(dfl->clk_gpio))
         pr_err("Error while setting clk pin direction\n");
-    }
     mutex_unlock(&dfl->mutex);
     return rc;
 }
 
 static struct file_operations dfl_fops = {
-    .owner=THIS_MODULE,
-    .open=dfl_open,
-    .write=dfl_write,
-    .release=dfl_release
+    .owner = THIS_MODULE,
+    .open = dfl_open,
+    .write = dfl_write,
+    .release = dfl_release
 };
 
 
@@ -162,11 +172,13 @@ static int dfl_probe(struct platform_device *pdev)
     const char *name;
     struct device *dev = &pdev->dev;
     struct device_node *np = dev->of_node;
-    struct dfl_data *prv = devm_kzalloc(dev, sizeof(struct dfl_data),
-        GFP_KERNEL);
+    struct dfl_data *prv =
+        devm_kzalloc(dev, sizeof(struct dfl_data), GFP_KERNEL);
+
     pr_info("Probing dls_fpga_loader\n");
     rc = of_property_read_string(np, "dev_name", &name);
-    if (rc) {
+    if (rc)
+    {
         pr_err("Unable to get device name\n");
         return rc;
     }
@@ -176,6 +188,7 @@ static int dfl_probe(struct platform_device *pdev)
     prv->miscdev.fops = &dfl_fops;
     prv->init_gpio = devm_gpiod_get(dev, "init", GPIOD_IN);
     mutex_init(&prv->mutex);
+
     if (IS_ERR(prv->init_gpio))
         return PTR_ERR(prv->init_gpio);
     prv->done_gpio = devm_gpiod_get(dev, "done", GPIOD_IN);
@@ -190,8 +203,10 @@ static int dfl_probe(struct platform_device *pdev)
     prv->clk_gpio = devm_gpiod_get(dev, "clk", GPIOD_IN);
     if (IS_ERR(prv->clk_gpio))
         return PTR_ERR(prv->clk_gpio);
+
     rc = misc_register(&prv->miscdev);
-    if (rc < 0) {
+    if (rc < 0)
+    {
         pr_info("Could not register misc device\n");
         return rc;
     }
@@ -226,4 +241,3 @@ module_platform_driver(dfl_platform_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Diamond Light Source Ltd");
-
