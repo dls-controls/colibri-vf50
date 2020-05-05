@@ -91,10 +91,9 @@ static void clk(struct dfl_data *dfl)
 
 static void send_data(struct dfl_data *dfl, char *buf, size_t size)
 {
-    int i, j;
-    for(i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
-        for (j = 7; j >= 0; j--)
+        for (int j = 7; j >= 0; j--)
         {
             gpiod_set_value(dfl->d0_gpio, (buf[i]>>j) & 1);
             clk(dfl);
@@ -107,11 +106,10 @@ static ssize_t dfl_write(
 {
     struct dfl_data *dfl = to_dfl_data(file);
     char buf[MAX_BUFFER_SIZE];
-    size_t wsize;
     size_t ubuf_i = 0;
     while (ubuf_i < size)
     {
-        wsize = size - ubuf_i;
+        size_t wsize = size - ubuf_i;
         if (wsize > MAX_BUFFER_SIZE)
             wsize = MAX_BUFFER_SIZE;
         if (copy_from_user(buf, ubuf + ubuf_i, wsize))
@@ -134,11 +132,10 @@ static ssize_t dfl_write(
 static int dfl_release(struct inode *inode, struct file *file)
 {
     int val;
-    int i;
     int rc = 0;
     struct dfl_data *dfl = to_dfl_data(file);
     pr_info("Closing %s\n", dfl->miscdev.name);
-    for (i = 0; i < 1000; i++)
+    for (int i = 0; i < 1000; i++)
     {
         val = gpiod_get_value(dfl->done_gpio);
         if (val == 1)
@@ -168,20 +165,21 @@ static struct file_operations dfl_fops = {
 
 static int dfl_probe(struct platform_device *pdev)
 {
-    int rc;
-    const char *name;
     struct device *dev = &pdev->dev;
     struct device_node *np = dev->of_node;
     struct dfl_data *prv =
         devm_kzalloc(dev, sizeof(struct dfl_data), GFP_KERNEL);
 
     pr_info("Probing dls_fpga_loader\n");
-    rc = of_property_read_string(np, "dev_name", &name);
+
+    const char *name;
+    int rc = of_property_read_string(np, "dev_name", &name);
     if (rc)
     {
         pr_err("Unable to get device name\n");
         return rc;
     }
+
     strncpy(prv->name, name, MAX_DEV_NAME_SIZE);
     prv->miscdev.name = prv->name;
     prv->miscdev.minor = MISC_DYNAMIC_MINOR;
