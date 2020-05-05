@@ -33,14 +33,13 @@ static int wait_for_io(struct gpio_desc *io, int eval, int sleep)
 {
     int val;
     unsigned long timeout = jiffies + msecs_to_jiffies(GPIO_TIMEOUT_MS);
-    while (!time_after(jiffies, timeout))
-    {
+    do {
         val = gpiod_get_value(io);
         if (val == eval)
             break;
         if (sleep)
             msleep(10);
-    }
+    } while (!time_after(jiffies, timeout));
     if (val != eval)
     {
         pr_err("gpio %p won't go to %d\n", io, eval);
