@@ -173,6 +173,7 @@ dtc: $(DTC)
 U_BOOT_NAME = u-boot-$(U_BOOT_TAG)
 U_BOOT_SRC = $(SRC_ROOT)/$(U_BOOT_NAME)
 U_BOOT_BUILD = $(BUILD_ROOT)/u-boot
+U_BOOT_PATCH = patches/uboot.disable-dcu.patch
 
 U_BOOT_IMAGE = $(U_BOOT_BUILD)/u-boot-nand.imx
 FW_PRINTENV = $(U_BOOT_BUILD)/tools/env/fw_printenv
@@ -182,6 +183,7 @@ MAKE_U_BOOT = $(EXPORTS) KBUILD_OUTPUT=$(U_BOOT_BUILD) $(MAKE) -C $(U_BOOT_SRC)
 
 $(U_BOOT_SRC):
 	$(call EXTRACT_FILE,$(U_BOOT_NAME),tgz)
+	patch -d $(U_BOOT_SRC) -p1 < $(U_BOOT_PATCH)
 	chmod -R a-w $(U_BOOT_SRC)
 
 $(U_BOOT_IMAGE): $(DTC) $(U_BOOT_SRC)

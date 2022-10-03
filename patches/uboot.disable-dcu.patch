@@ -1,0 +1,16 @@
+This patch disables DCU interface (Display Controller Unit), which by default
+is enabled in the board header file.
+
+diff --git a/include/configs/colibri_vf.h b/include/configs/colibri_vf.h
+index 0579bfdc4e..e6965562c6 100644
+--- a/include/configs/colibri_vf.h
++++ b/include/configs/colibri_vf.h
+@@ -30,7 +30,7 @@
+ #define CONFIG_MXC_OCOTP
+ #endif
+ 
+-#define CONFIG_FSL_DCU_FB
++#undef CONFIG_FSL_DCU_FB
+ 
+ #ifdef CONFIG_FSL_DCU_FB
+ #define CONFIG_VIDEO
