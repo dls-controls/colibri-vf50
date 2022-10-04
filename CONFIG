@@ -1,7 +1,7 @@
 # Localisation definitions for building Colibri VF50 rootfs
 
 # Location of DLS rootfs
-ROOTFS_TOP = /dls_sw/prod/targetOS/rootfs/1.12
+ROOTFS_TOP = /dls_sw/prod/targetOS/rootfs/1.14
 
 # Where to do the build.  Needs around 2GB free space!
 BUILD_TOP = /scratch/$(USER)/tmp/colibri-vf50
