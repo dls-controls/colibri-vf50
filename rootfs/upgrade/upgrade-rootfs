@@ -25,9 +25,10 @@ UPGRADE_STATE=0
 TEST_FILES=true
 CONFIRM=false
 REBOOT_NOW=false
+UPGRADE_U_BOOT=0
 
 # Process options
-while getopts 'd:S:prfCh' option; do
+while getopts 'd:S:prfChu' option; do
     case "$option" in
         d)  TFTP_DIR="$OPTARG" ;;
         S)  TFTP_SERVER="$OPTARG" ;;
@@ -44,11 +45,13 @@ Configures upgrade of root file system from tftp server.
     -p  If this flag is set then the persistent state will be replaced.
     -f  This flag can be set to bypass validation of the upgrade files on the
         tftp server.
+    -u  This flag can be set to upgrade u-boot
     -r  If set (together with -C) then reboot will be triggered immediately.
     -C  This flag must be set to confirm the upgrade, otherwise the upgrade will
         be tested but not actually applied.
 EOF
             exit 0 ;;
+        u) UPGRADE_U_BOOT=1 ;;
         *)  Error 'Invalid option: try -h for help' ;;
     esac
 done
@@ -74,12 +77,12 @@ if $TEST_FILES; then
     trap 'rm -f $TEMPFILE' EXIT
 
     echo Validating upgrade files on TFTP server
+    tftp_get upgrade-script.image
     tftp_get zImage
     tftp_get device-tree.dtb
     tftp_get rootfs.img
-    if [ $UPGRADE_STATE = 1 ]; then
-        tftp_get state.img
-    fi
+    [ $UPGRADE_U_BOOT = 1 ] && tftp_get u-boot-nand.imx
+    [ $UPGRADE_STATE = 1 ] && tftp_get state.img
 fi
 
 
@@ -98,7 +101,9 @@ gatewayip $gatewayip
 serverip $serverip
 server_prefix $TFTP_PREFIX
 write_state $UPGRADE_STATE
-bootcmd tftpboot \$scriptaddr \${server_prefix}upgrade-script.image  &&  \
+write_u_boot $UPGRADE_U_BOOT
+bootcmd ping \$serverip ; \
+tftpboot \$scriptaddr \${server_prefix}upgrade-script.image  &&  \
 source \$scriptaddr
 EOF
     fw_setenv -s /dev/stdin  &&
