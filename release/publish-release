@@ -1,0 +1,12 @@
+#!/bin/bash
+
+GIT_REPO=git@gitlab.diamond.ac.uk:controls/targetOS/colibri-vf50.git
+RELEASE_DIR=/dls_sw/prod/targetOS/colibri-vf50/
+
+QUEUE_JOB=/home/mga83/bin/queue-job
+
+TAG="${1:?Specify tag to release}"
+
+$QUEUE_JOB -t . -C "$RELEASE_DIR" -N \
+    git clone -b $TAG --depth 1 $GIT_REPO $TAG  '&&' \
+    $TAG/release/do-release-build

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+cd "$(dirname "$0")"/..
+
+export BUILD_TOP=$(pwd)/build
+
+trap 'make clean-all' EXIT
+
+make default docs  &&
+mv build/boot .

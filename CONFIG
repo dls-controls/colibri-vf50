@@ -4,7 +4,7 @@
 ROOTFS_TOP = /dls_sw/prod/targetOS/rootfs/1.14
 
 # Where to do the build.  Needs around 2GB free space!
-BUILD_TOP = /scratch/$(USER)/tmp/colibri-vf50
+BUILD_TOP ?= /scratch/$(USER)/tmp/colibri-vf50
 
 # Where to find the source files for rootfs
 TAR_FILES += /dls_sw/prod/targetOS/tar-files
