@@ -16,11 +16,13 @@ ubi write $loadaddr dtb $filesize
 # Rootfs
 tftpboot $loadaddr ${server_prefix}rootfs.img
 ubi write $loadaddr rootfs $filesize
+
 # Writeable persistent state
 if test $write_state = 1; then
     tftpboot $loadaddr ${server_prefix}state.img
     ubi write $loadaddr state $filesize
 fi
+
 # Write to u-boot nand partition
 if test $write_u_boot = 1; then
     echo Upgrading u-boot
@@ -28,7 +30,10 @@ if test $write_u_boot = 1; then
     nand erase 0x00020000 0x00160000
     nand write $loadaddr u-boot $filesize
 fi
+
 # Restore the original boot command
 setenv bootcmd run ubiboot
 saveenv
 boot
+
+# vim: set filetype=sh:

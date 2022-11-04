@@ -13,4 +13,18 @@ TAR_FILES += /dls_sw/work/targetOS/tar-files
 # Where to place upgrade files for upgrade server
 UPGRADE_ROOT = /dls_sw/work/tftpboot/dev/colibri-vf50/
 
+# Dependencies for release process
+#
+# Path to master git repository that can be read by build server
+GIT_REPO = https://gitlab.diamond.ac.uk/controls/targetOS/colibri-vf50.git
+# Release directory on build server for releases
+RELEASE_DIR = /dls_sw/prod/targetOS/colibri-vf50/
+# Helper script for submitting build release
+QUEUE_JOB = /home/mga83/bin/queue-job
+
+
+# Tricksy but simple trick to extract environment variables into shell script
+print-%:
+	@echo $*=$($*)
+
 # vim: set filetype=make:

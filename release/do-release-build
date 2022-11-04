@@ -9,4 +9,5 @@ export BUILD_TOP=$(pwd)/build
 trap 'make clean-all' EXIT
 
 make default docs  &&
+make upgrade  &&
 mv build/boot .

@@ -36,6 +36,7 @@ while getopts 'd:S:prfChu' option; do
         f)  TEST_FILES=false ;;
         r)  REBOOT_NOW=true ;;
         C)  CONFIRM=true ;;
+        u)  UPGRADE_U_BOOT=1 ;;
         h)  cat <<EOF
 Usage: upgrade-rootfs [options] version
 
@@ -45,13 +46,12 @@ Configures upgrade of root file system from tftp server.
     -p  If this flag is set then the persistent state will be replaced.
     -f  This flag can be set to bypass validation of the upgrade files on the
         tftp server.
-    -u  This flag can be set to upgrade u-boot
+    -u  This flag can be set to upgrade U-Boot
     -r  If set (together with -C) then reboot will be triggered immediately.
     -C  This flag must be set to confirm the upgrade, otherwise the upgrade will
         be tested but not actually applied.
 EOF
             exit 0 ;;
-        u) UPGRADE_U_BOOT=1 ;;
         *)  Error 'Invalid option: try -h for help' ;;
     esac
 done
@@ -94,6 +94,8 @@ if $CONFIRM; then
     gatewayip=$(ip route | sed -n '/default via /{s///; s/ .*//; p;q}')
 
     # Update the u-boot environment
+    # The ping at the start of the boot command seems to be sometimes required
+    # in order to "warm up" the tftp server to ensure that tftpboot succeeds!
     cat <<EOF |
 ipaddr $ipaddr
 netmask $netmask

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+TOP="$(dirname "$0")"/..
+
+TARGET="${1:?Specify name of Colibri to upgrade}"
+VERSION="${2:?Specify rootfs version}"
+SERVER="$3"
+
+UPGRADE_ARGS=(-u -C -r)
+[[ -n "$SERVER" ]]  &&  UPGRADE_ARGS+=(-S "$SERVER")
+
+scp "$TOP"/rootfs/upgrade/upgrade-rootfs root@"$TARGET":/tmp  &&
+ssh root@"$TARGET" /tmp/upgrade-rootfs "${UPGRADE_ARGS[@]}" "$VERSION"

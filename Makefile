@@ -389,6 +389,7 @@ UPGRADE_FILES += zImage
 UPGRADE_FILES += device-tree.dtb
 UPGRADE_FILES += rootfs.img
 UPGRADE_FILES += state.img
+UPGRADE_FILES += u-boot-nand.imx
 
 upgrade: $(BOOT_FILES) boot
 	for f in $(UPGRADE_FILES); do \

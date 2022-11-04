@@ -1,12 +1,22 @@
 #!/bin/bash
 
-GIT_REPO=git@gitlab.diamond.ac.uk:controls/targetOS/colibri-vf50.git
-RELEASE_DIR=/dls_sw/prod/targetOS/colibri-vf50/
+HERE="$(dirname "$0")"
 
-QUEUE_JOB=/home/mga83/bin/queue-job
+# Drag the requested variable from the CONFIG file and put it into our current
+# environment
+get_var()
+{
+    eval $(make -f "$HERE"/../CONFIG print-$1)
+}
+
+
+# Pull the important variables from CONFIG
+get_var GIT_REPO
+get_var RELEASE_DIR
+get_var QUEUE_JOB
 
 TAG="${1:?Specify tag to release}"
 
-$QUEUE_JOB -t . -C "$RELEASE_DIR" -N \
+$QUEUE_JOB -b -C "$RELEASE_DIR" -N \
     git clone -b $TAG --depth 1 $GIT_REPO $TAG  '&&' \
     $TAG/release/do-release-build
