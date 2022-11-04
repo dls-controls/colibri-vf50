@@ -3,6 +3,8 @@
 Building Colibri Base System
 ============================
 
+..  _configure_build:
+
 Configuring Build
 -----------------
 
@@ -14,19 +16,37 @@ The following keys must be set in ``CONFIG``:
 
 ``ROOTFS_TOP``
     This must point to a copy of the DLS `rootfs`_.  At the time of writing
-    release 1.12 is the correct version to use.
+    release 1.14 is the correct version to use.
 
 ``BUILD_TOP``
     This must point to a workspace with around 2GB of free space.  The build
     will occur under this directory.
+
+    Note that when doing the release build (see :ref:`release_process` below)
+    this is overridden so that the build is local, and the build is deleted on
+    completion.
 
 ``TAR_FILES``
     This must point to one or more directories containing the source tar files
     used to build the base system.  The required tar files are listed below.
 
 ``UPGRADE_ROOT``
-    If this symbol is defined then ``make upgrade`` will place the files needed
-    for performing a remote upgrade in this directory.
+    This symbol must be set to a directory where TFTP files can be placed.
+    Running ``make upgrade`` will place the files needed for performing a remote
+    upgrade in this directory.
+
+The following ``CONFIG`` keys are used to define the release and are used by the
+``publish-release`` script:
+
+``GIT_REPO``
+    This is the path to the git repository server.  This path must be accessible
+    from the build server, so should be an http link rather than a git link.
+
+``RELEASE_DIR``
+    This is the base directory where the rootfs release will be made.
+
+``QUEUE_JOB``
+    This is a helper script for pushing the build request to the build server.
 
 The following keys must be set in ``TOOLCHAIN``:
 
@@ -148,9 +168,42 @@ The following further directories are created under ``$(BUILD_TOP)``:
         ``rootfs`` directory as appropriate.
 
 
+..  _release_process:
+
+Release Process
+---------------
+
+The release process for generating a new versioned release of the rootfs
+involves the following steps:
+
+*   Push final version of sources to git at our local `gitlab`_
+    `colibri-vf50`_ repository.
+*   Tag the sources, eg ``git tag 1.3``, and push the tag.
+*   Run the ``publish-release`` script thus (where ``$TAG`` is the tag created
+    above)::
+
+        release/publish-release $TAG
+
+This will do three things (the build process takes about 25 minutes):
+
+*   Check out the tagged files in the DLS release directory
+*   Build the files required for the rootfs.  These are then placed in the
+    ``boot`` subdirectory of the release.
+*   Finally the files required for upgrades are pushed to the TFTP server.
+
+The TFTP server is required for automatic upgrades as documented in
+:ref:`upgrading`.
+
+
 ..  _rootfs:
     https://github.com/Araneidae/rootfs
 
 ..  _gcc-linaro:
-     https://releases.linaro.org/components/toolchain/binaries/\
+    https://releases.linaro.org/components/toolchain/binaries/\
          6.2-2016.11/arm-linux-gnueabihf/
+
+..  _gitlab:
+    https://gitlab.diamond.ac.uk
+
+..  _colibri-vf50:
+    https://gitlab.diamond.ac.uk/controls/targetOS/colibri-vf50

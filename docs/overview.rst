@@ -11,6 +11,9 @@ Power Supply`_.
 The `DPS Rootfs`_ builder (this project) is used to assemble the core OS
 functions required to support the EPICS `DPS IOC`_ (a separate project).
 
+See :ref:`release_process` for the software release process, see
+:ref:`upgrade-u-boot` for upgrading older versions of U-Boot.
+
 Interfaces
 ----------
 
