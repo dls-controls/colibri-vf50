@@ -10,4 +10,6 @@ UPGRADE_ARGS=(-u -C -r)
 [[ -n "$SERVER" ]]  &&  UPGRADE_ARGS+=(-S "$SERVER")
 
 scp "$TOP"/rootfs/upgrade/upgrade-rootfs root@"$TARGET":/tmp  &&
-ssh root@"$TARGET" /tmp/upgrade-rootfs "${UPGRADE_ARGS[@]}" "$VERSION"
+ssh -x root@"$TARGET" \
+    PATH=/sbin:/usr/sbin:/bin:/usr/bin:/opt/bin \
+    /tmp/upgrade-rootfs "${UPGRADE_ARGS[@]}" "$VERSION"
