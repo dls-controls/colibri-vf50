@@ -35,6 +35,10 @@ The following keys must be set in ``CONFIG``:
     Running ``make upgrade`` will place the files needed for performing a remote
     upgrade in this directory.
 
+``SPHINX_BUILD``
+    This should identify the tool used to build the documentation, typically the
+    application ``sphinx-build``.
+
 The following ``CONFIG`` keys are used to define the release and are used by the
 ``publish-release`` script:
 

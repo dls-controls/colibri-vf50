@@ -22,6 +22,9 @@ RELEASE_DIR = /dls_sw/prod/targetOS/colibri-vf50/
 # Helper script for submitting build release
 QUEUE_JOB = /home/mga83/bin/queue-job
 
+# Builder for documentation
+SPHINX_BUILD = /dls_sw/prod/tools/RHEL7-x86_64/defaults/bin/sphinx-build
+
 
 # Tricksy but simple trick to extract environment variables into shell script
 print-%:

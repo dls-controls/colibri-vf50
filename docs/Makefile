@@ -1,5 +1,7 @@
+include ../CONFIG
+
 html: conf.py $(wildcard *.rst)
-	sphinx-build -nE -b html . html
+	$(SPHINX_BUILD) -nE -b html . html
 
 clean:
 	rm -rf html
