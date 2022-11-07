@@ -4,10 +4,10 @@ set -e
 
 cd "$(dirname "$0")"/..
 
-export BUILD_TOP=$(pwd)/build
+BUILD_TOP=$(pwd)/build
 
-trap 'make clean-all' EXIT
+trap 'make BUILD_TOP=$BUILD_TOP clean-all' EXIT
 
-make default docs  &&
-make upgrade  &&
+make BUILD_TOP=$BUILD_TOP default docs  &&
+make BUILD_TOP=$BUILD_TOP upgrade  &&
 mv build/boot .
