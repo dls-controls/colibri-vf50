@@ -23,6 +23,7 @@ REQUIRED_SYMBOLS += UPGRADE_ROOT
 REQUIRED_SYMBOLS += BINUTILS_DIR
 REQUIRED_SYMBOLS += COMPILER_PREFIX
 REQUIRED_SYMBOLS += SYSROOT
+REQUIRED_SYMBOLS += TYPE
 
 include CONFIG
 include $(TOOLCHAIN)
@@ -228,9 +229,12 @@ $(ZIMAGE): $(KERNEL_BUILD)/.config
 	$(MAKE_KERNEL) zImage
 	touch $@
 
-$(KERNEL_DTB): kernel/device-tree.dts kernel/dls-dps.dtsi
+$(KERNEL_DTS_DIR)/dls-device.dtsi: kernel/dls-$(TYPE).dtsi
+	cp -f $< $@
+
+$(KERNEL_DTB): kernel/device-tree.dts kernel/dls-common.dtsi $(KERNEL_DTS_DIR)/dls-device.dtsi
 	mkdir -p $(KERNEL_DTS_DIR)
-	cp $^ $(KERNEL_DTS_DIR)
+	cp kernel/device-tree.dts kernel/dls-common.dtsi $(KERNEL_DTS_DIR)
 	$(MAKE_KERNEL) device-tree.dtb
 
 kernel-menuconfig: $(KERNEL_BUILD)/.config
