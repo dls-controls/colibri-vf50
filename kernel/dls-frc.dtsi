@@ -1,0 +1,31 @@
+#include "dls-common.dtsi"
+
+&iomuxc {
+    vf610-colibri {
+        pinctrl_dls_fpga: fpgagrp {
+            fsl,pins = <
+                /* Digital Interface FPGA programming. */
+                VF610_PAD_PTA17__GPIO_7     0x0001      // INIT B
+                VF610_PAD_PTE21__GPIO_126   0x0001      // DONE
+                VF610_PAD_PTE22__GPIO_127   0x00ed      // PROG B
+                VF610_PAD_PTE13__GPIO_118   0x00c1      // DSO
+                VF610_PAD_PTE14__GPIO_119   0x00cd      // CLK
+            >;
+        };
+    };
+};
+
+/ {
+    load_frc_dfl: dfl {
+        compatible = "dls,fpga_loader";
+        dev_name = "load_frc";
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_dls_fpga>;
+        init-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+        done-gpios = <&gpio3 30 GPIO_ACTIVE_HIGH>;
+        prog-gpios = <&gpio3 31 GPIO_ACTIVE_HIGH>;
+        d0-gpios = <&gpio3 22 GPIO_ACTIVE_HIGH>;
+        clk-gpios = <&gpio3 23 GPIO_ACTIVE_HIGH>;
+        status = "okay";
+    };
+};

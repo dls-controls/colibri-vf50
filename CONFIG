@@ -1,4 +1,6 @@
 # Localisation definitions for building Colibri VF50 rootfs
+# type must be either sic or frc, depending on which card is the colibri in
+TYPE = sic
 
 # Location of DLS rootfs
 ROOTFS_TOP = /dls_sw/prod/targetOS/rootfs/1.15

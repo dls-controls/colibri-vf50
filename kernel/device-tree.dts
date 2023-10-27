@@ -9,7 +9,8 @@
 
 /dts-v1/;
 #include "vf500-colibri.dtsi"
-#include "dls-dps.dtsi"
+/* renamed dtsi from the specific card */
+#include "dls-device.dtsi"
 
 / {
     model = "Toradex Colibri VF50 on DLS Digital Power Supply";
